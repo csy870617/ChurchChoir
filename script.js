@@ -119,12 +119,13 @@ function toggleBoard(forceOpen = false) {
 
 
 // -----------------------------------------------------------
-// ✨ 초대(공유) 기능
+// ✨ 초대(공유) 기능 수정
 // -----------------------------------------------------------
 async function inviteMember() {
     const shareData = {
-        title: 'FAITHS 크리스천 성장 도구', 
-        text: '당신을 초대합니다',
+        // ✨ 말풍선 메시지 (전달되는 텍스트)
+        title: '성가대 연습실 - 당신을 초대합니다', 
+        text: '성가대 연습실 - 당신을 초대합니다',
         url: 'https://csy870617.github.io/faiths/index.html'
     };
 
