@@ -1,6 +1,23 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// --- [1] 인앱 브라우저 탈출 로직 ---
+function escapeInAppBrowser() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    const targetUrl = location.href;
+
+    if (userAgent.match(/kakaotalk|naver|instagram|fban|fbav|line/i)) {
+        if (userAgent.match(/android/i)) {
+            location.href = 'intent://' + targetUrl.replace(/https?:\/\//i, '') + '#Intent;scheme=https;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end';
+        } else if (userAgent.match(/iphone|ipad|ipod/i)) {
+            // iOS는 안내만 가능
+        }
+    }
+}
+escapeInAppBrowser();
+
+
+// --- [2] Firebase 설정 ---
 const firebaseConfig = {
     apiKey: "AIzaSyBNh4M-nIOKOM5IdSerRFnoHHpyqNkfULA",
     authDomain: "churchchoir-a6099.firebaseapp.com",
@@ -46,9 +63,10 @@ window.removePartLink = removePartLink;
 window.openCreateGroupModal = () => { document.getElementById('create-group-modal').style.display = 'flex'; };
 window.closeCreateGroupModal = () => { document.getElementById('create-group-modal').style.display = 'none'; };
 window.createGroup = createGroup;
+window.inviteMember = inviteMember; // ✨ 초대 함수 노출
 
 // -----------------------------------------------------------
-// 1. 공지사항 및 기본 로직
+// 3. 초기화 및 이벤트 리스너
 // -----------------------------------------------------------
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -64,6 +82,54 @@ window.addEventListener('DOMContentLoaded', () => {
     loadShortcutLinks();
     loadPartLinks(); 
 });
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === "Escape") {
+        document.getElementById('selection-modal').style.display = 'none';
+        document.getElementById('create-group-modal').style.display = 'none';
+        document.getElementById('link-action-modal').style.display = 'none';
+        document.getElementById('part-link-modal').style.display = 'none';
+    }
+});
+
+// -----------------------------------------------------------
+// ✨ 초대(공유) 기능
+// -----------------------------------------------------------
+async function inviteMember() {
+    const shareData = {
+        title: '성가대 연습실',
+        text: '성가대 연습실에 초대합니다',
+        url: 'https://csy870617.github.io/faiths/'
+    };
+
+    // 1. 네이티브 공유 API 시도 (모바일에서 카톡 등 선택 가능)
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+        } catch (err) {
+            // 사용자가 취소했거나 에러 발생 시 클립보드 복사 시도
+            if (err.name !== 'AbortError') {
+                copyToClipboard(shareData.url);
+            }
+        }
+    } else {
+        // 2. PC 등 미지원 환경에서는 클립보드 복사
+        copyToClipboard(shareData.url);
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert("초대 링크가 복사되었습니다.\n카카오톡 등에 붙여넣기 하세요.");
+    }).catch(err => {
+        alert("링크 복사에 실패했습니다. 주소창의 링크를 직접 복사해주세요.");
+    });
+}
+
+
+// -----------------------------------------------------------
+// 4. 그룹 및 로그인 로직
+// -----------------------------------------------------------
 
 async function createGroup() {
     const name = document.getElementById('new-church-name').value.trim();
@@ -377,13 +443,12 @@ function openLinkActionModal(slot) {
     const statusContent = document.getElementById('current-link-status-content');
     
     if (data && data.title) {
-        // ✨ HTML로 삽입하여 <strong> 태그에 스타일과 onclick을 적용
+        // 녹색 카드형 디자인 + 클릭 이동
         statusContent.innerHTML = `
             <strong onclick="window.open('${data.url}', '_blank')">${data.title}</strong>
         `;
         statusContent.classList.remove('unlinked');
     } else {
-        // 설정되지 않음
         statusContent.innerHTML = `
             <strong class="unlinked" style="cursor:default;">설정되지 않음</strong>
         `;
@@ -497,6 +562,7 @@ function openPartLinkModal(part) {
     const titleInput = document.getElementById('part-link-title');
     if (part === 'all') {
         titleInput.style.display = 'block';
+        // 합창일 경우 저장된 제목 불러오기, 없으면 공란
         titleInput.value = data ? data.title : '';
     } else {
         titleInput.style.display = 'none';
@@ -616,7 +682,7 @@ function removePartLink() {
         document.getElementById('part-link-pw').value = '';
         
         if (currentPart === 'all') {
-            loadPartLinks(); 
+            loadPartLinks(); // 합창 제거 시 전체 갱신
         } else {
             updatePartButton(currentPart, null);
         }
