@@ -63,7 +63,8 @@ window.removePartLink = removePartLink;
 window.openCreateGroupModal = () => { document.getElementById('create-group-modal').style.display = 'flex'; };
 window.closeCreateGroupModal = () => { document.getElementById('create-group-modal').style.display = 'none'; };
 window.createGroup = createGroup;
-window.inviteMember = inviteMember; // ✨ 초대 함수 노출
+window.inviteMember = inviteMember; 
+window.toggleBoard = toggleBoard; 
 
 // -----------------------------------------------------------
 // 3. 초기화 및 이벤트 리스너
@@ -77,6 +78,7 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('login-pw').value = pw;
         document.getElementById('remember-me').checked = true;
         
+        toggleBoard(true); 
         boardLogin();
     }
     loadShortcutLinks();
@@ -92,28 +94,49 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+function toggleBoard(forceOpen = false) {
+    const wrapper = document.getElementById('board-content-wrapper');
+    const titleText = document.getElementById('board-title-text');
+    const btnWrite = document.getElementById('btn-show-write');
+    const btnLogout = document.getElementById('btn-logout');
+    
+    if (forceOpen || wrapper.style.display === 'none') {
+        wrapper.style.display = 'block';
+        titleText.innerHTML = '📢 성가대 공지사항 <span style="font-size:0.8em; color:#888;">▲</span>';
+        
+        if (currentGroupId) {
+            btnWrite.style.display = 'block';
+            btnLogout.style.display = 'block';
+        }
+    } else {
+        wrapper.style.display = 'none';
+        titleText.innerHTML = '📢 성가대 공지사항 <span style="font-size:0.8em; color:#888;">▼</span>';
+        
+        btnWrite.style.display = 'none';
+        btnLogout.style.display = 'none';
+    }
+}
+
+
 // -----------------------------------------------------------
 // ✨ 초대(공유) 기능
 // -----------------------------------------------------------
 async function inviteMember() {
     const shareData = {
-        title: '성가대 연습실',
-        text: '성가대 연습실에 초대합니다',
-        url: 'https://csy870617.github.io/faiths/'
+        title: 'FAITHS 크리스천 성장 도구', 
+        text: '당신을 초대합니다',
+        url: 'https://csy870617.github.io/faiths/index.html'
     };
 
-    // 1. 네이티브 공유 API 시도 (모바일에서 카톡 등 선택 가능)
     if (navigator.share) {
         try {
             await navigator.share(shareData);
         } catch (err) {
-            // 사용자가 취소했거나 에러 발생 시 클립보드 복사 시도
             if (err.name !== 'AbortError') {
                 copyToClipboard(shareData.url);
             }
         }
     } else {
-        // 2. PC 등 미지원 환경에서는 클립보드 복사
         copyToClipboard(shareData.url);
     }
 }
@@ -192,10 +215,11 @@ async function boardLogin() {
             localStorage.removeItem('choir_remembered');
         }
 
-        document.getElementById('board-title-text').innerText = "📢 성가대 공지사항"; 
+        document.getElementById('board-title-text').innerHTML = '📢 성가대 공지사항 <span style="font-size:0.8em; color:#888;">▲</span>'; 
         
         document.getElementById('board-login').style.display = 'none';
         document.getElementById('board-list').style.display = 'block';
+        
         document.getElementById('btn-show-write').style.display = 'block';
         document.getElementById('btn-logout').style.display = 'block';
         
@@ -214,9 +238,10 @@ function boardLogout() {
 
     document.getElementById('board-list').style.display = 'none';
     document.getElementById('board-write').style.display = 'none';
+    
     document.getElementById('btn-show-write').style.display = 'none';
     document.getElementById('btn-logout').style.display = 'none';
-    document.getElementById('board-title-text').innerText = "📢 성가대 공지사항";
+    
     document.getElementById('board-login').style.display = 'block';
 }
 
@@ -299,6 +324,7 @@ function showWriteForm() {
     
     document.getElementById('board-list').style.display = 'none';
     document.getElementById('btn-show-write').style.display = 'none';
+    
     document.getElementById('board-write').style.display = 'block';
 }
 
@@ -418,11 +444,11 @@ function updateLinkButton(slot, data) {
         btn.classList.remove('unlinked');
         btn.style.backgroundColor = 'var(--primary-green)'; 
     } else {
-        btn.innerText = `연습곡 ${slot}`; 
+        // 문구 수정: 연습곡 등록 X
+        btn.innerText = `연습곡 등록 ${slot}`; 
         btn.classList.add('unlinked');
         btn.style.backgroundColor = '';
     }
-    // onclick은 HTML에서 고정
 }
 
 function handleLinkClick(slot) {
@@ -443,7 +469,6 @@ function openLinkActionModal(slot) {
     const statusContent = document.getElementById('current-link-status-content');
     
     if (data && data.title) {
-        // 녹색 카드형 디자인 + 클릭 이동
         statusContent.innerHTML = `
             <strong onclick="window.open('${data.url}', '_blank')">${data.title}</strong>
         `;
@@ -539,10 +564,8 @@ function updatePartButton(part, data) {
 
     const partName = partNames[part];
     
-    // 버튼 이름 고정
     btn.innerText = partName; 
 
-    // 색상 처리: URL이 있을 때만 활성화 (회색 제거)
     if (data && data.url) {
         btn.classList.remove('unlinked');
     } else {
@@ -558,11 +581,9 @@ function openPartLinkModal(part) {
 
     document.getElementById('part-modal-title').innerText = `${partName} 파트 링크 설정`;
     
-    // 제목 입력창 표시 제어: 합창(all)일 때만 보임
     const titleInput = document.getElementById('part-link-title');
     if (part === 'all') {
         titleInput.style.display = 'block';
-        // 합창일 경우 저장된 제목 불러오기, 없으면 공란
         titleInput.value = data ? data.title : '';
     } else {
         titleInput.style.display = 'none';
@@ -573,7 +594,6 @@ function openPartLinkModal(part) {
 
     const statusContent = document.getElementById('current-part-link-content');
     
-    // 현재 설정 상태 표시 로직
     let displayTitle = '설정되지 않음';
     let displayUrl = '';
     let isLinked = false;
@@ -583,7 +603,6 @@ function openPartLinkModal(part) {
         displayUrl = data.url;
         isLinked = true;
     } else {
-        // 상속된 제목이 있는지 확인 (합창 데이터)
         const allLinkData = localStorage.getItem('partLink_all');
         const allData = allLinkData ? JSON.parse(allLinkData) : null;
         if (allData && allData.title) {
@@ -593,12 +612,10 @@ function openPartLinkModal(part) {
 
     if (isLinked || (displayTitle !== '설정되지 않음')) {
         if (displayUrl) {
-            // ✨ 녹색 계열 박스 + 클릭 시 이동 (HTML 구조 중요)
             statusContent.innerHTML = `
                 <strong onclick="window.open('${displayUrl}', '_blank')">${displayTitle}</strong>
             `;
         } else {
-            // 제목만 있는 경우 (클릭 불가)
             statusContent.innerHTML = `
                 <strong style="cursor: default; background-color: #f1f3f5; border-color: #dee2e6; color: #495057; box-shadow: none;">${displayTitle}</strong>
             `;
@@ -610,22 +627,10 @@ function openPartLinkModal(part) {
     document.getElementById('part-link-modal').style.display = 'flex';
 }
 
-function getPartColor(part) {
-    switch (part) {
-        case 'all': return 'var(--primary-blue)';
-        case 'sop': return 'var(--part-sop)';
-        case 'alt': return 'var(--part-alt)';
-        case 'ten': return 'var(--part-ten)';
-        case 'bas': return 'var(--part-bas)';
-        default: return 'var(--text-dark)';
-    }
-}
-
 function savePartLink() {
     const url = document.getElementById('part-link-url').value.trim();
     let title = '';
 
-    // 제목 처리
     if (currentPart === 'all') {
         title = document.getElementById('part-link-title').value.trim();
         if (!title) {
@@ -682,7 +687,7 @@ function removePartLink() {
         document.getElementById('part-link-pw').value = '';
         
         if (currentPart === 'all') {
-            loadPartLinks(); // 합창 제거 시 전체 갱신
+            loadPartLinks(); 
         } else {
             updatePartButton(currentPart, null);
         }
@@ -820,12 +825,3 @@ function showSelectionPopup(matches, isSetupMode) {
         }
     };
 }
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === "Escape") {
-        document.getElementById('selection-modal').style.display = 'none';
-        document.getElementById('create-group-modal').style.display = 'none';
-        document.getElementById('link-action-modal').style.display = 'none';
-        document.getElementById('part-link-modal').style.display = 'none';
-    }
-});
