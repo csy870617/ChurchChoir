@@ -2,196 +2,165 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ 성가대 연습실 | 찬양곡 검색</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎶</text></svg>">
-    
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://csy870617.github.io/faiths/index.html">
-    <meta property="og:title" content="FAITHS 크리스천 성장 도구">
-    <meta property="og:description" content="더 멋진 크리스천으로 함께 성장해요">
-    
-    <meta property="og:image" content="https://csy870617.github.io/faiths/ad/thumbnail.png?v=3">
-
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;500;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FAITHS</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link rel="stylesheet" href="style.css">
-    
-    <script src="concise_data.js"></script>
-    <script type="module" src="script.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#5f27cd">
+    <link rel="apple-touch-icon" href="icon/0.png">
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2txfYR9bGr4uwcTKnp8D4" crossorigin="anonymous"></script>
 </head>
-<body onload="loadShortcutLinks(); loadPartLinks();">
-    <div class="container">
-        <header>
-            <h1>성가대 연습실 🎶</h1>
+<body>
+
+    <div id="loading-screen">
+        <div class="loading-content">
+            <img src="icon/0.png" alt="Loading Logo" class="loading-logo">
+            <p class="loading-text">FAITHS</p>
+        </div>
+    </div>
+
+    <div class="mobile-wrapper">
+        <header class="hero-banner">
+            <div class="banner-content">
+                <h1>FAITHS<span class="dot">.</span></h1>
+                <p>크리스천 성장 도구 플랫폼</p>
+            </div>
+            <div class="banner-graphic"><div class="light-bloom-1"></div><div class="light-bloom-2"></div></div>
         </header>
 
-        <div class="description">
-            <p>
-                검색창에 찬양곡 제목을 입력하면, <br>
-                중앙아트 파트연습실의 해당 곡 페이지로 바로 연결됩니다.
-            </p>
+        <div class="tabs-header">
+            <div class="tabs-container">
+                <button class="tab active" data-filter="all">전체</button>
+                <button class="tab" data-filter="faith">신앙</button>
+                <button class="tab" data-filter="growth">성장</button>
+                <button class="tab" data-filter="tools">도구</button>
+            </div>
+            <div class="header-buttons">
+                <button id="hide-mode-btn" class="icon-btn">🙈</button>
+                <button id="settings-btn" class="icon-btn">⚙️</button>
+            </div>
         </div>
-        
-        <form class="custom-search-form" onsubmit="return searchAndRedirect(this);">
-            <input type="text" name="query" id="search-input" placeholder="찬양곡 제목 입력..." required>
-            <button type="submit">검색</button>
-        </form>
 
-        <div class="shortcut-links">
-            <div class="shortcut-links-group">
-                <button id="btn-link-1" class="btn-link unlinked" onclick="handleLinkClick(1)">연습곡 등록 1</button>
-                <button id="btn-link-2" class="btn-link unlinked" onclick="handleLinkClick(2)">연습곡 등록 2</button>
+        <div class="notice-section">
+            <div class="notice-card">
+                <div class="notice-icon">📢</div>
+                <div class="notice-content">
+                    <h4>Upcoming Updates</h4>
+                    <p>크리스천의 성장을 돕기 위한 다양한 도구와 콘텐츠가 계속해서 제작/배포될 예정입니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="list-container" id="main-list">
+            <div class="list-card main-feature" id="card-daily" data-category="faith" data-link="https://csy870617.github.io/todaybible/">
+                <img src="icon/1.png" alt="하루말씀" class="app-icon-img">
+                <div class="text-box"><h3>하루말씀</h3><p>오늘 하나님과 동행할 말씀카드</p></div><button class="btn-go">→</button>
             </div>
             
-            <div class="part-practice-links-group">
-                <button id="btn-part-all" class="btn-part btn-part-all unlinked" onclick="openPartLinkModal('all')">합창</button>
-                <button id="btn-part-sop" class="btn-part btn-part-sop unlinked" onclick="openPartLinkModal('sop')">소프라노</button>
-                <button id="btn-part-alt" class="btn-part btn-part-alt unlinked" onclick="openPartLinkModal('alt')">알토</button>
-                <button id="btn-part-ten" class="btn-part btn-part-ten unlinked" onclick="openPartLinkModal('ten')">테너</button>
-                <button id="btn-part-bas" class="btn-part btn-part-bas unlinked" onclick="openPartLinkModal('bas')">베이스</button>
+            <div class="list-card" id="card-mbti" data-category="faith" data-link="https://faiths.life/">
+                <img src="icon/2.png" alt="FAITH MBTI" class="app-icon-img">
+                <div class="text-box"><h3>FAITH MBTI</h3><p>크리스천 신앙 유형 분석</p></div><button class="btn-go">→</button>
             </div>
 
-            <p class="link-info" style="margin-top: 15px; font-size: 0.85em; color: var(--text-light);">
-                검색되지 않는 곡은 위 버튼을 통해 직접 주소를 입력해주세요.
-            </p>
-        </div>
-
-        <div class="board-container">
-            <div class="board-header" onclick="toggleBoard()" style="cursor: pointer;">
-                <span id="board-title-text">📢 성가대 공지사항 <span style="font-size:0.8em; color:#888;">▼</span></span>
-                
-                <div class="header-buttons">
-                    <button id="btn-show-write" class="btn-small btn-write" style="display:none;" onclick="event.stopPropagation(); showWriteForm()">글쓰기</button>
-                    <button id="btn-logout" class="btn-small btn-logout" style="display:none;" onclick="event.stopPropagation(); boardLogout()">나가기</button>
+            <div class="list-card" id="card-choir" data-category="tools" data-link="https://csy870617.github.io/ChurchChoir/">
+                <img src="icon/5.png" alt="성가대 연습실" class="app-icon-img">
+                <div class="text-box">
+                    <h3>성가대 연습실</h3>
+                    <p>우리교회 성가대를 위한 특별한 공간</p>
                 </div>
+                <button class="btn-go">→</button>
             </div>
 
-            <div id="board-content-wrapper" style="display: none;">
-                
-                <div id="board-login" class="login-form">
-                    <p style="font-size:0.9em; color:#666; margin-bottom:20px;">
-                        교회 이름과 공유된 비밀번호를 입력하세요.
-                    </p>
-                    <input type="text" id="login-church" class="login-input" placeholder="교회 이름 (예: 우리교회)">
-                    <input type="password" id="login-pw" class="login-input" placeholder="공유 비밀번호">
-                    
-                    <div class="remember-check">
-                        <label><input type="checkbox" id="remember-me"> 아이디/비밀번호 기억하기</label>
-                    </div>
+            <div class="list-card" id="card-ccm" data-category="faith">
+                <img src="icon/4.png" alt="CCM PLAYLIST" class="app-icon-img">
+                <div class="text-box"><h3>상황별 CCM PLAYLIST</h3><p>내 기분과 상황에 딱 맞는 찬양 듣기</p></div><button class="btn-go">→</button>
+            </div>
 
-                    <div class="login-actions">
-                        <button onclick="openCreateGroupModal()" class="btn-create-group">그룹 만들기</button>
-                        <button onclick="inviteMember()" class="btn-invite">성가대원 초대</button>
-                        <button onclick="boardLogin()" class="login-btn">공지사항</button>
-                    </div>
-                </div>
+            <div class="list-card" id="card-engo" data-category="growth" data-link="https://engo.life/">
+                <img src="icon/3.png" alt="ENGO 영어회화" class="app-icon-img">
+                <div class="text-box"><h3>ENGO 영어회화</h3><p>English & go 영어회화의 시작</p></div><button class="btn-go">→</button>
+            </div>
 
-                <div id="board-list" style="display:none;">
-                    <div id="post-items">
-                        <div class="empty-msg">데이터를 불러오는 중입니다...</div>
-                    </div>
-                </div>
-
-                <div id="board-write" class="write-form">
-                    <input type="hidden" id="edit-mode-id">
-                    <input type="text" id="write-title" class="input-full" placeholder="제목을 입력하세요">
-                    <textarea id="write-content" class="input-full" placeholder="공지할 내용을 자유롭게 작성하세요"></textarea>
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="write-author" class="input-full" style="flex:1;" placeholder="작성자">
-                        <input type="password" id="write-pw" class="input-full" style="flex:1;" placeholder="비밀번호(수정/삭제용)">
-                    </div>
-                    <div style="text-align:right; margin-top:15px;">
-                        <button onclick="showBoardList()" class="btn-small btn-cancel" style="padding:8px 15px; font-size:0.95em;">닫기</button>
-                        <button onclick="savePost()" class="btn-small btn-save" style="padding:8px 15px; font-size:0.95em;">등록하기</button>
-                    </div>
-                </div>
+            <div class="list-card share-card" id="card-share" data-category="tools">
+                <div class="icon-box" style="background: #FEE500; color: #3b1e1e;">💌</div> 
+                <div class="text-box"><h3>함께 성장할 친구 초대</h3><p>이 플랫폼을 친구에게 공유하기</p></div><button class="btn-go">📤</button>
             </div>
         </div>
-
-        <footer>
-            <a href="https://www.joongangart.kr/partpractice/partpractice.html" target="_blank" style="text-decoration: none; color: inherit;">
-                데이터 출처 및 저작권: 중앙아트(Joongang Art Co.)
-            </a>
-        </footer>
     </div>
 
-    <div id="selection-modal" class="modal-overlay" style="display: none;">
+    <div id="install-banner" class="install-banner">
+        <div class="install-content">
+            <div class="install-text"><strong>앱으로 더 편하게!</strong><p>홈 화면에 설치하고 바로 접속하세요.</p></div>
+            <button id="banner-install-btn" class="banner-btn primary">설치</button>
+        </div>
+        <div class="install-footer">
+            <button id="banner-close-btn" class="text-btn">닫기</button>
+            <span class="divider">|</span>
+            <button id="banner-never-btn" class="text-btn">다시 보지 않기</button>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay">
         <div class="modal-content">
-            <h3>🔍 중복 곡 선택</h3>
-            <div id="modal-options-list" class="modal-options"></div>
+            <div class="modal-header"><h3>오늘 마음이 어떠신가요?</h3><p>상황에 맞는 찬양을 들려드릴게요.</p></div>
+            <div class="mood-grid">
+                <button class="mood-btn" data-key="comfort"><span class="mood-emoji">☁️</span><span>힘들고 지칠 때</span></button>
+                <button class="mood-btn" data-key="prayer"><span class="mood-emoji">🙏</span><span>깊은 기도의 시간</span></button>
+                <button class="mood-btn" data-key="morning"><span class="mood-emoji">☀️</span><span>활기찬 아침</span></button>
+                <button class="mood-btn" data-key="sleep"><span class="mood-emoji">🌙</span><span>잠들기 전 평안</span></button>
+                <button class="mood-btn" data-key="work"><span class="mood-emoji">🎧</span><span>신나는 노동요</span></button>
+                <button class="mood-btn" data-key="english"><span class="mood-emoji">🌏</span><span>은혜로운 영어찬양</span></button>
+            </div>
+            <button id="close-modal" class="modal-close-btn">닫기</button>
         </div>
     </div>
-    
-    <div id="link-action-modal" class="modal-overlay" style="display: none;">
+    <div id="ios-modal" class="modal-overlay">
         <div class="modal-content">
-            <h3 id="action-modal-title">연습곡 설정</h3>
-            <div class="current-link-status">
-                <div id="current-link-status-content" class="status-content unlinked">설정되지 않음</div>
-            </div>
-            
-            <div class="action-section">
-                <div class="section-title">새 곡 검색 및 설정</div>
-                <form class="link-action-search" onsubmit="return searchAndSetLink(this);">
-                    <input type="text" name="setupQuery" id="action-search-input" placeholder="찬양곡 제목 입력..." required>
-                    <button type="submit">검색</button>
-                </form>
-                <div id="action-search-message" style="color: var(--danger-red); font-size: 0.9em; margin-top: 10px; display: none;"></div>
-                
-                <div class="modal-footer-row">
-                    <div class="left-group">
-                        <input type="password" id="action-link-pw" class="input-mini-pw" placeholder="비밀번호">
-                        <button class="btn-small btn-remove-final" onclick="removeLink()">링크 해제</button>
+            <div class="modal-header"><h3>아이폰 앱 설치 방법</h3><p>사파리(Safari) 브라우저 하단의<br><strong>[공유]</strong> 버튼을 눌러주세요.</p></div>
+            <div class="ios-guide"><span class="guide-icon">📤</span><span class="guide-arrow">⬇</span><span class="guide-text">홈 화면에 추가</span><span class="guide-icon">📲</span></div>
+            <button id="close-ios-modal" class="modal-close-btn">확인</button>
+        </div>
+    </div>
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3>설정 (Settings)</h3></div>
+            <div class="settings-body">
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <label>글자 크기</label>
+                        <div class="range-container">
+                            <span style="font-size: 14px;">가</span>
+                            <input type="range" id="font-size-slider" min="0.9" max="1.3" step="0.05" value="1">
+                            <span style="font-size: 20px; font-weight:bold;">가</span>
+                        </div>
                     </div>
-                    <div class="right-group">
-                        <button onclick="closeLinkActionModal()" class="btn-small btn-cancel">닫기</button>
+                </div>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 24px 0;">
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <button id="install-app-btn" class="settings-action-btn install-btn-layout">
+                            <img src="icon/0.png" alt="FAITHS App" class="install-btn-img">
+                            <div class="install-btn-text"><h4>FAITHS APP 다운로드</h4><p>크리스천 성장 도구 플랫폼</p></div>
+                        </button>
+                    </div>
+                    <div class="setting-item">
+                        <a href="mailto:csy0645009@gmail.com" class="settings-action-btn contact-link">
+                            <span class="emoji">📧</span> 개발자에게 문의하기
+                        </a>
                     </div>
                 </div>
             </div>
+            <button id="close-settings-modal" class="modal-close-btn">닫기</button>
         </div>
     </div>
 
-    <div id="part-link-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <h3 id="part-modal-title">합창 파트 링크 설정</h3>
-            <div class="current-link-status" style="background-color: white;">
-                <div id="current-part-link-content" class="part-status-content">
-                    <strong id="current-part-title" class="unlinked">설정되지 않음</strong>
-                </div>
-            </div>
-
-            <div class="action-section" style="border-left: 4px solid var(--primary-blue);">
-                <div class="section-title">주소 입력 및 저장</div>
-                <input type="text" id="part-link-title" class="input-full-url" placeholder="찬양 제목">
-                <input type="text" id="part-link-url" class="input-full-url" placeholder="여기에 YouTube 또는 MP3 주소를 입력하세요">
-                
-                <div class="modal-footer-row">
-                    <div class="left-group">
-                         <input type="password" id="part-link-pw" class="input-mini-pw" placeholder="비밀번호">
-                         <button class="btn-small btn-remove-final" onclick="removePartLink()">링크 해제</button>
-                    </div>
-                    <div class="right-group">
-                        <button onclick="savePartLink()" class="btn-small btn-save">저장</button>
-                        <button onclick="closePartLinkModal()" class="btn-small btn-cancel">닫기</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="create-group-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <h3>🆕 새 그룹 만들기</h3>
-            <p style="font-size:0.95em; color:#555; margin-bottom:20px; line-height:1.5;">
-                교회 이름은 다른 그룹과 중복될 수 있습니다.<br>
-                단, <strong style="color:#d6336c;">이름과 비밀번호가 모두 똑같은 경우</strong>에는<br>보안을 위해 생성이 제한됩니다.
-            </p>
-            <input type="text" id="new-church-name" class="input-full" placeholder="교회 이름 (예: 제일교회)">
-            <input type="password" id="new-church-pw" class="input-full" placeholder="비밀번호 설정">
-            <div style="text-align:right; margin-top:20px;">
-                <button onclick="closeCreateGroupModal()" class="btn-small btn-cancel" style="padding:10px 18px; font-size:1em;">닫기</button>
-                <button onclick="createGroup()" class="btn-small btn-save" style="padding:10px 18px; font-size:1em;">만들기</button>
-            </div>
-        </div>
-    </div>
+    <script src="playlist.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
+        }
+    </script>
+    <script src="script.js"></script>
 </body>
 </html>
