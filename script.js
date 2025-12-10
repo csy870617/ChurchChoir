@@ -123,9 +123,10 @@ function toggleBoard(forceOpen = false) {
 // -----------------------------------------------------------
 async function inviteMember() {
     const shareData = {
-        // ✨ 말풍선 메시지 (전달되는 텍스트)
-        title: '성가대 연습실 - 당신을 초대합니다', 
-        text: '성가대 연습실 - 당신을 초대합니다',
+        // 제목은 짧고 명확하게 앱 이름으로 설정
+        title: '성가대 연습실', 
+        // 내용은 전달하고 싶은 문구로 설정
+        text: '당신을 초대합니다. 함께 찬양해요!',
         url: 'https://csy870617.github.io/faiths/index.html'
     };
 
