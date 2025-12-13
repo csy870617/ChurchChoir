@@ -123,10 +123,8 @@ function toggleBoard(forceOpen = false) {
 // -----------------------------------------------------------
 async function inviteMember() {
     const shareData = {
-        // 제목은 짧고 명확하게 앱 이름으로 설정
         title: '성가대 연습실', 
-        // 내용은 전달하고 싶은 문구로 설정
-        text: '당신을 초대합니다. 함께 찬양해요!',
+        text: '성가대 연습실 - 당신을 초대합니다',
         url: 'https://csy870617.github.io/faiths/index.html'
     };
 
@@ -715,7 +713,8 @@ window.searchAndRedirect = function(form) {
         showSelectionPopup(matches, false); 
         return false;
     } else {
-        alert(`❌ "${userInput}"에 해당하는 찬양곡을 등록된 목록에서 찾을 수 없습니다.\n\n검색되지 않는 곡은 게시판을 통해 직접 링크를 입력하시기 바랍니다.`);
+        // 문구 수정 반영
+        alert(`❌ "${userInput}"에 해당하는 곡을 목록에서 찾을 수 없습니다.\n\n검색되지 않는 곡은 홈화면에 있는 버튼을 통해 직접 링크를 입력하시기 바랍니다`);
         return false;
     }
 }
