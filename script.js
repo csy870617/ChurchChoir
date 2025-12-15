@@ -124,9 +124,9 @@ function toggleBoard(forceOpen = false) {
 async function inviteMember() {
     const shareData = {
         // 제목은 앱 이름으로 간단히 설정
-        title: '성가대 연습실', 
+        title: '[성가대 연습실] 찬양곡 미리듣기', 
         // 실제 전달될 메시지 본문
-        text: '[성가대 연습실] 찬양곡 미리듣기',
+        text: '',
         // 요청하신 깔끔한 URL
         url: 'https://csy870617.github.io/faiths/'
     };
