@@ -123,20 +123,25 @@ function toggleBoard(forceOpen = false) {
 // -----------------------------------------------------------
 async function inviteMember() {
     const shareData = {
+        // 제목은 앱 이름으로 간단히 설정
         title: '성가대 연습실', 
-        text: '성가대 연습실 - 당신을 초대합니다',
-        url: 'https://csy870617.github.io/faiths/index.html'
+        // 실제 전달될 메시지 본문
+        text: '[성가대 연습실] 찬양곡 미리듣기',
+        // 요청하신 깔끔한 URL
+        url: 'https://csy870617.github.io/faiths/'
     };
 
     if (navigator.share) {
         try {
             await navigator.share(shareData);
         } catch (err) {
+            // 사용자가 공유 창을 닫거나 취소한 경우 에러 무시
             if (err.name !== 'AbortError') {
                 copyToClipboard(shareData.url);
             }
         }
     } else {
+        // PC 등 공유 기능 미지원 시 클립보드 복사
         copyToClipboard(shareData.url);
     }
 }
