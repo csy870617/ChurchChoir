@@ -95,7 +95,11 @@ async function createGroup() {
     try {
         const q = query(groupsCollection, where("churchName", "==", name), where("password", "==", pw));
         const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) { alert("이미 동일한 이름과 비밀번호를 사용하는 그룹이 존재합니다."); return; }
+        if (!querySnapshot.empty) { 
+            // ✨ 수정된 경고 메시지
+            alert("이미 동일한 이름과 비밀번호를 사용하는 그룹이 존재합니다. 비밀번호를 다르게 입력해주세요."); 
+            return; 
+        }
         await addDoc(groupsCollection, { churchName: name, password: pw, createdAt: new Date().toISOString() });
         alert(`'${name}' 그룹이 생성되었습니다! 로그인해주세요.`);
         closeCreateGroupModal();
@@ -143,7 +147,6 @@ async function boardLogin() {
         const btnWrite = document.getElementById('btn-show-write');
         if(btnWrite) btnWrite.style.display = 'block';
         
-        // ✨ 로그인 성공 시 즐겨찾기 버튼 강제 갱신
         loadShortcutLinks();
         loadPosts(); 
     } catch (e) { console.error(e); alert("로그인 중 오류가 발생했습니다."); }
@@ -272,18 +275,10 @@ async function tryEditPost(id) {
 }
 
 // --- 즐겨찾기 ---
-function loadShortcutLinks() { 
-    for (let i = 1; i <= 3; i++) { 
-        const linkData = localStorage.getItem(`storedLink${i}`); 
-        updateLinkButton(i, linkData ? JSON.parse(linkData) : null); 
-    } 
-}
-
-// ✨ 업데이트 함수 (심플 디자인 적용 - Class Toggle 방식)
+function loadShortcutLinks() { for (let i = 1; i <= 3; i++) { const linkData = localStorage.getItem(`storedLink${i}`); updateLinkButton(i, linkData ? JSON.parse(linkData) : null); } }
 function updateLinkButton(slot, data) { 
     const btn = document.getElementById(`btn-shortcut-${slot}`); 
     if (btn) { 
-        // 초기화 (CSS 클래스에 의존하므로 인라인 스타일 불필요하지만 안전하게 제거)
         btn.style.backgroundColor = '';
         btn.style.color = '';
         btn.style.borderColor = '';
@@ -297,7 +292,6 @@ function updateLinkButton(slot, data) {
         } 
     } 
 }
-
 function openShortcutLink(slot) { const linkData = localStorage.getItem(`storedLink${slot}`); if (linkData) { const data = JSON.parse(linkData); window.open(data.url, '_blank'); } else { alert("등록된 곡이 없습니다.\n[⚙️ 등록/수정] 버튼을 눌러 곡을 등록해주세요."); } }
 function openShortcutManager() { refreshShortcutManager(); document.getElementById('shortcut-manager-modal').style.display = 'flex'; }
 function refreshShortcutManager() { for (let i = 1; i <= 3; i++) { const linkData = localStorage.getItem(`storedLink${i}`); const titleEl = document.getElementById(`manage-title-${i}`); if (linkData) { const data = JSON.parse(linkData); titleEl.innerText = data.title; titleEl.style.color = '#333'; } else { titleEl.innerText = "설정안됨"; titleEl.style.color = '#ccc'; } } }
@@ -681,3 +675,38 @@ window.applySharedData = applySharedData;
 window.sharePartLink = sharePartLink;
 window.removePartLink = removePartLink; 
 window.reportSharedLink = reportSharedLink;
+
+// -----------------------------------------------------------
+// 5. 초기화 리스너 등록 (마지막)
+// -----------------------------------------------------------
+window.addEventListener('DOMContentLoaded', () => {
+    const remembered = localStorage.getItem('choir_remembered');
+    if (remembered) {
+        const { name, pw } = JSON.parse(remembered);
+        document.getElementById('login-church').value = name;
+        document.getElementById('login-pw').value = pw;
+        document.getElementById('remember-me').checked = true;
+    }
+
+    const isAutoLogin = localStorage.getItem('choir_auto_login');
+    if (isAutoLogin === 'true' && remembered) {
+        document.getElementById('auto-login').checked = true;
+        toggleBoard(true);
+        boardLogin(); 
+    } else {
+        toggleBoard(true); 
+    }
+
+    loadShortcutLinks();
+    loadPartLinks(); 
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === "Escape") {
+        document.getElementById('selection-modal').style.display = 'none';
+        document.getElementById('create-group-modal').style.display = 'none';
+        document.getElementById('link-action-modal').style.display = 'none';
+        document.getElementById('part-link-modal').style.display = 'none';
+        document.getElementById('shortcut-manager-modal').style.display = 'none';
+    }
+});

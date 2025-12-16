@@ -56,7 +56,7 @@
                         <p style="font-size:0.9em; color:#bbb; margin-bottom:20px; margin-top:0;">
                             교회 이름과 공유된 비밀번호를 입력하세요.
                         </p>
-                        <input type="text" id="login-church" class="login-input" placeholder="교회 이름 (예: 우리교회)">
+                        <input type="text" id="login-church" class="login-input" placeholder="교회 이름">
                         <input type="password" id="login-pw" class="login-input" placeholder="공유 비밀번호">
                         
                         <div class="login-options-row">
@@ -85,8 +85,8 @@
 
                     <hr class="section-divider">
                     
-<div class="manual-content-area" style="margin-bottom: 30px;">
-                        <h4 style="margin: 0 0 15px 0; color: #555; font-size: 1em;">🎵 찬양곡 링크</h4>
+                    <div class="manual-content-area" style="margin-bottom: 30px;">
+                        <h4 style="margin: 0 0 15px 0; color: #555; font-size: 1em;">🎵 찬양곡 링크 (직접 등록)</h4>
                         <div class="manual-play-buttons">
                             <button id="btn-play-all" class="btn-play btn-part-all" onclick="openDirectLink('all')">합창</button>
                             <button id="btn-play-sop" class="btn-play btn-part-sop" onclick="openDirectLink('sop')">소프라노</button>
@@ -140,7 +140,7 @@
 
             </div>
         </div>
-        
+
         <footer>
             <a href="https://www.joongangart.kr/partpractice/partpractice.html" target="_blank">
                 데이터 출처 및 저작권: 중앙아트(Joongang Art Co.)
@@ -228,13 +228,16 @@
         </div>
     </div>
 
-    <div id="create-group-modal" class="modal-overlay" style="display: none;">
+<div id="create-group-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <h3>🆕 새 그룹 만들기</h3>
-            <p style="font-size:0.95em; color:#bbb; margin-bottom:20px; line-height:1.5;">교회 이름은 다른 그룹과 중복될 수 있습니다.<br>단, <strong style="color:#ff6b6b;">이름과 비밀번호가 모두 똑같은 경우</strong>에는<br>보안을 위해 생성이 제한됩니다.</p>
-            <input type="text" id="new-church-name" class="input-full" placeholder="교회 이름 (예: 제일교회)">
+            <input type="text" id="new-church-name" class="input-full" placeholder="교회 이름">
             <input type="password" id="new-church-pw" class="input-full" placeholder="비밀번호 설정">
-            <div style="text-align:right; margin-top:20px;"><button onclick="closeCreateGroupModal()" class="btn-small btn-cancel" style="padding:10px 18px; font-size:1em;">닫기</button><button onclick="createGroup()" class="btn-small btn-save" style="padding:10px 18px; font-size:1em;">만들기</button></div>
+            
+            <div class="modal-btn-row">
+                <button onclick="createGroup()" class="btn-small btn-save" style="padding:10px 18px; font-size:1em;">만들기</button>
+                <button onclick="closeCreateGroupModal()" class="btn-small btn-cancel" style="padding:10px 18px; font-size:1em;">닫기</button>
+            </div>
         </div>
     </div>
 </body>
