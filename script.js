@@ -43,7 +43,16 @@ const partNames = { 'all': '전체', 'sop': '소프라노', 'alt': '알토', 'te
 let searchResultsCache = {}; 
 
 // -----------------------------------------------------------
-// 2. 모든 함수 선언 (Function Declarations)
+// 2. 유틸리티 함수
+// -----------------------------------------------------------
+function isValidYoutubeUrl(url) {
+    if (!url) return false; 
+    const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+    return regex.test(url);
+}
+
+// -----------------------------------------------------------
+// 3. 모든 함수 선언 (Function Declarations)
 // -----------------------------------------------------------
 
 // --- UI 제어 ---
@@ -96,7 +105,6 @@ async function createGroup() {
         const q = query(groupsCollection, where("churchName", "==", name), where("password", "==", pw));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) { 
-            // ✨ 수정된 경고 메시지
             alert("이미 동일한 이름과 비밀번호를 사용하는 그룹이 존재합니다. 비밀번호를 다르게 입력해주세요."); 
             return; 
         }
@@ -471,7 +479,14 @@ function applySharedData(key) {
 }
 
 async function reportSharedLink(docId) {
+    const reportedList = JSON.parse(localStorage.getItem('choir_reported_links') || '[]');
+    if (reportedList.includes(docId)) {
+        alert("이미 신고한 콘텐츠입니다.");
+        return;
+    }
+
     if(!confirm("이 콘텐츠를 신고하시겠습니까?\n부적절한 콘텐츠나 잘못된 링크인 경우 신고해주세요.\n(누적 3회 시 자동 삭제됩니다)")) return;
+    
     try {
         const docRef = doc(db, "shared_links", docId);
         const docSnap = await getDoc(docRef);
@@ -485,6 +500,9 @@ async function reportSharedLink(docId) {
             } else {
                 await updateDoc(docRef, { reportCount: currentReports });
                 alert("신고가 접수되었습니다. (현재 누적: " + currentReports + "회)");
+                
+                reportedList.push(docId);
+                localStorage.setItem('choir_reported_links', JSON.stringify(reportedList));
             }
         } else { alert("이미 삭제된 데이터입니다."); }
     } catch (e) { console.error(e); alert("신고 처리 중 오류가 발생했습니다."); }
@@ -639,6 +657,21 @@ function formatBookName(prefix) { if (prefix.startsWith('joongang')) return `중
 window.openLink = function(url) { window.open(url, '_blank'); return false; }
 function showSelectionPopup(matches, isSetupMode) { const modal = document.getElementById('selection-modal'); const optionsList = document.getElementById('modal-options-list'); optionsList.innerHTML = ''; matches.forEach(match => { const item = document.createElement('div'); item.className = 'modal-option-item'; item.innerHTML = `<strong>${match.title}</strong><span>[${match.collectionName}] 버전으로 ${isSetupMode ? '선택' : '연결'}</span>`; item.onclick = () => { if (isSetupMode) { selectAndSetLink(match); } else { openLink(match.url); modal.style.display = 'none'; } }; optionsList.appendChild(item); }); modal.style.display = 'flex'; modal.onclick = (e) => { if (e.target.id === 'selection-modal') modal.style.display = 'none'; }; }
 
+// ✨ 누락되었던 메인 검색창 함수 추가
+function searchAndRedirect(form) {
+    const userInput = form.query.value.trim();
+    if (!userInput) return false;
+    const matches = performSearch(userInput);
+    if (matches.length === 0) {
+        alert("검색 결과가 없습니다.");
+    } else if (matches.length === 1) {
+        window.open(matches[0].url, '_blank');
+    } else {
+        showSelectionPopup(matches, false);
+    }
+    return false;
+}
+
 // -----------------------------------------------------------
 // 4. 전역 스코프 등록 (버튼 작동 필수)
 // -----------------------------------------------------------
@@ -675,6 +708,7 @@ window.applySharedData = applySharedData;
 window.sharePartLink = sharePartLink;
 window.removePartLink = removePartLink; 
 window.reportSharedLink = reportSharedLink;
+window.searchAndRedirect = searchAndRedirect; // ✨ 전역 등록 추가
 
 // -----------------------------------------------------------
 // 5. 초기화 리스너 등록 (마지막)
@@ -691,10 +725,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const isAutoLogin = localStorage.getItem('choir_auto_login');
     if (isAutoLogin === 'true' && remembered) {
         document.getElementById('auto-login').checked = true;
-        toggleBoard(true);
+        // toggleBoard(true); // 자동로그인 시에는 안펼침 (사용자경험상 이게 나을 수 있음)
         boardLogin(); 
     } else {
-        toggleBoard(true); 
+        // toggleBoard(true); // 기본 상태는 닫힘
     }
 
     loadShortcutLinks();
