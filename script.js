@@ -43,7 +43,7 @@ const partNames = { 'all': '전체', 'sop': '소프라노', 'alt': '알토', 'te
 let searchResultsCache = {}; 
 
 // -----------------------------------------------------------
-// 2. 유틸리티 함수
+// 2. 유틸리티 및 뒤로가기 제어 (Popstate)
 // -----------------------------------------------------------
 function isValidYoutubeUrl(url) {
     if (!url) return false; 
@@ -51,11 +51,39 @@ function isValidYoutubeUrl(url) {
     return regex.test(url);
 }
 
+// ✨ 뒤로가기 이벤트 감지: 팝업이 열려있으면 닫기만 함
+window.addEventListener('popstate', () => {
+    const modals = [
+        'selection-modal',
+        'create-group-modal',
+        'link-action-modal',
+        'part-link-modal',
+        'shortcut-manager-modal'
+    ];
+    modals.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+});
+
+// ✨ 팝업 열기 헬퍼 (히스토리 추가)
+function openModalWithHistory(modalId) {
+    const el = document.getElementById(modalId);
+    if (el) {
+        el.style.display = 'flex';
+        history.pushState({ modal: modalId }, null, null);
+    }
+}
+
+// ✨ 팝업 닫기 헬퍼 (뒤로가기 실행)
+function closeModalWithHistory() {
+    history.back(); // 뒤로가기를 실행하면 popstate 이벤트가 발생하여 팝업이 닫힘
+}
+
 // -----------------------------------------------------------
-// 3. 모든 함수 선언 (Function Declarations)
+// 3. UI 및 기능 함수
 // -----------------------------------------------------------
 
-// --- UI 제어 ---
 function toggleBoard(forceOpen = false) {
     const wrapper = document.getElementById('integrated-content-wrapper');
     const toggleIcon = document.getElementById('toggle-icon');
@@ -96,7 +124,7 @@ function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => { alert("초대 링크가 복사되었습니다.\n카카오톡 등에 붙여넣기 하세요."); }).catch(err => { alert("링크 복사에 실패했습니다."); });
 }
 
-// --- Firebase 그룹/게시판 ---
+// --- Firebase ---
 async function createGroup() {
     const name = document.getElementById('new-church-name').value.trim();
     const pw = document.getElementById('new-church-pw').value.trim();
@@ -110,7 +138,7 @@ async function createGroup() {
         }
         await addDoc(groupsCollection, { churchName: name, password: pw, createdAt: new Date().toISOString() });
         alert(`'${name}' 그룹이 생성되었습니다! 로그인해주세요.`);
-        closeCreateGroupModal();
+        closeModalWithHistory(); // ✨ 수정됨
     } catch (e) { alert("그룹 생성 중 오류가 발생했습니다."); }
 }
 
@@ -301,14 +329,40 @@ function updateLinkButton(slot, data) {
     } 
 }
 function openShortcutLink(slot) { const linkData = localStorage.getItem(`storedLink${slot}`); if (linkData) { const data = JSON.parse(linkData); window.open(data.url, '_blank'); } else { alert("등록된 곡이 없습니다.\n[⚙️ 등록/수정] 버튼을 눌러 곡을 등록해주세요."); } }
-function openShortcutManager() { refreshShortcutManager(); document.getElementById('shortcut-manager-modal').style.display = 'flex'; }
+function openShortcutManager() { 
+    refreshShortcutManager(); 
+    openModalWithHistory('shortcut-manager-modal'); // ✨ 수정됨
+}
 function refreshShortcutManager() { for (let i = 1; i <= 3; i++) { const linkData = localStorage.getItem(`storedLink${i}`); const titleEl = document.getElementById(`manage-title-${i}`); if (linkData) { const data = JSON.parse(linkData); titleEl.innerText = data.title; titleEl.style.color = '#333'; } else { titleEl.innerText = "설정안됨"; titleEl.style.color = '#ccc'; } } }
-function configureShortcut(slot) { currentLinkSlot = slot; document.getElementById('action-search-input').value = ''; document.getElementById('action-search-message').style.display = 'none'; document.getElementById('link-action-modal').style.display = 'flex'; }
+function configureShortcut(slot) { 
+    currentLinkSlot = slot; 
+    document.getElementById('action-search-input').value = ''; 
+    document.getElementById('action-search-message').style.display = 'none'; 
+    openModalWithHistory('link-action-modal'); // ✨ 수정됨
+}
 function clearShortcut(slot) { if(confirm(`즐겨찾기 ${slot}번을 삭제하시겠습니까?`)) { localStorage.removeItem(`storedLink${slot}`); refreshShortcutManager(); loadShortcutLinks(); } }
 function handleLinkClick(slot) {}
-function removeLink() { const inputPw = document.getElementById('action-link-pw').value.trim(); if (!currentLoginPw) { alert("로그인 후 이용 가능합니다."); return; } if (!inputPw || inputPw !== currentLoginPw) { alert("비밀번호가 일치하지 않습니다."); return; } if(confirm(`정말 즐겨찾기 ${currentLinkSlot}을(를) 해제하시겠습니까?`)) { localStorage.removeItem(`storedLink${currentLinkSlot}`); document.getElementById('action-link-pw').value = ''; updateLinkButton(currentLinkSlot, null); refreshShortcutManager(); closeLinkActionModal(); } }
-function searchAndSetLink(form) { const userInput = form.setupQuery.value.trim(); document.getElementById('action-search-message').style.display = 'none'; if (!userInput) return false; const matches = performSearch(userInput); if (matches.length === 1) { saveLinkToStorage(currentLinkSlot, matches[0]); alert(`'${matches[0].title}' 곡이 즐겨찾기 ${currentLinkSlot}에 설정되었습니다.`); document.getElementById('link-action-modal').style.display = 'none'; refreshShortcutManager(); loadShortcutLinks(); } else if (matches.length > 1) { showSelectionPopup(matches, true); } else { document.getElementById('action-search-message').innerText = `"${userInput}"에 해당하는 곡을 찾을 수 없습니다.`; document.getElementById('action-search-message').style.display = 'block'; } return false; }
-window.selectAndSetLink = function(match) { saveLinkToStorage(currentLinkSlot, match); alert(`'${match.title}' 곡이 즐겨찾기 ${currentLinkSlot}에 설정되었습니다.`); document.getElementById('selection-modal').style.display = 'none'; document.getElementById('link-action-modal').style.display = 'none'; refreshShortcutManager(); loadShortcutLinks(); }
+function removeLink() { 
+    const inputPw = document.getElementById('action-link-pw').value.trim(); 
+    if (!currentLoginPw) { alert("로그인 후 이용 가능합니다."); return; } 
+    if (!inputPw || inputPw !== currentLoginPw) { alert("비밀번호가 일치하지 않습니다."); return; } 
+    if(confirm(`정말 즐겨찾기 ${currentLinkSlot}을(를) 해제하시겠습니까?`)) { 
+        localStorage.removeItem(`storedLink${currentLinkSlot}`); 
+        document.getElementById('action-link-pw').value = ''; 
+        updateLinkButton(currentLinkSlot, null); 
+        refreshShortcutManager(); 
+        closeModalWithHistory(); // ✨ 수정됨
+    } 
+}
+function searchAndSetLink(form) { const userInput = form.setupQuery.value.trim(); document.getElementById('action-search-message').style.display = 'none'; if (!userInput) return false; const matches = performSearch(userInput); if (matches.length === 1) { saveLinkToStorage(currentLinkSlot, matches[0]); alert(`'${matches[0].title}' 곡이 즐겨찾기 ${currentLinkSlot}에 설정되었습니다.`); closeModalWithHistory(); refreshShortcutManager(); loadShortcutLinks(); } else if (matches.length > 1) { showSelectionPopup(matches, true); } else { document.getElementById('action-search-message').innerText = `"${userInput}"에 해당하는 곡을 찾을 수 없습니다.`; document.getElementById('action-search-message').style.display = 'block'; } return false; }
+window.selectAndSetLink = function(match) { 
+    saveLinkToStorage(currentLinkSlot, match); 
+    alert(`'${match.title}' 곡이 즐겨찾기 ${currentLinkSlot}에 설정되었습니다.`); 
+    closeModalWithHistory(); // ✨ 수정됨
+    closeModalWithHistory(); // ✨ 2단계 닫기 (검색팝업 + 설정팝업) - 이 경우 selection 닫고 action 닫기
+    refreshShortcutManager(); 
+    loadShortcutLinks(); 
+}
 function saveLinkToStorage(slot, match) { const data = { title: match.title, url: match.url, collectionName: match.collectionName }; localStorage.setItem(`storedLink${slot}`, JSON.stringify(data)); }
 
 // --- 파트 링크 ---
@@ -361,7 +415,7 @@ function openPartLinkModal(part) {
         } 
     } 
     document.getElementById('part-link-url').value = data ? data.url : ''; 
-    document.getElementById('part-link-modal').style.display = 'flex'; 
+    openModalWithHistory('part-link-modal'); // ✨ 수정됨
 }
 
 // --- 검색 및 데이터 적용 ---
@@ -564,7 +618,7 @@ async function savePartLink() {
         } 
         alert("저장되었습니다! (우리 교회 목록에 자동 추가됨)"); 
         loadPartLinks(); 
-        closePartLinkModal(); 
+        closeModalWithHistory(); // ✨ 수정됨
         return; 
     } else { 
         const allLinkData = localStorage.getItem('partLink_all'); 
@@ -578,7 +632,7 @@ async function savePartLink() {
     localStorage.setItem(`partLink_${currentPart}`, JSON.stringify(data)); 
     loadPartLinks(); 
     alert(`${partNames[currentPart]} 설정이 저장되었습니다!`); 
-    closePartLinkModal(); 
+    closeModalWithHistory(); // ✨ 수정됨
 }
 
 async function sharePartLink() { 
@@ -648,14 +702,18 @@ function removePartLink() {
     }
     
     loadPartLinks();
-    closePartLinkModal();
+    closeModalWithHistory(); // ✨ 수정됨
 }
 
 function performSearch(userInput) { const normalizedInput = userInput.replace(/[\s\(\)\[\]!.]/g, '').toLowerCase(); const matches = []; if (typeof window.CONCISE_BOOK_DATA === 'undefined') { console.error('concise_data.js 로드 실패'); return []; } for (const book of window.CONCISE_BOOK_DATA) { const prefix = book[0]; const titles = book[1]; for (let i = 0; i < titles.length; i++) { const title = titles[i]; const normalizedTitle = title.replace(/[\s\(\)\[\]!.]/g, '').toLowerCase(); if (normalizedTitle.includes(normalizedInput)) { matches.push({ title: title, url: generateUrl(prefix, i + 1), collectionName: formatBookName(prefix) }); } } } return matches; }
 function generateUrl(collection, index) { return `https://joongangart.kr/${collection}/${index.toString().padStart(2, '0')}/pop1.html`; }
 function formatBookName(prefix) { if (prefix.startsWith('joongang')) return `중앙성가 Vol.${prefix.replace('joongang', '')}`; if (prefix.startsWith('best')) return `중앙성가 Best${prefix.replace('best', '')}`; if (prefix.startsWith('vision')) return `비전성가 Vol.${prefix.replace('vision', '')}`; if (prefix.startsWith('Glory_SAB')) return `영광의 혼성 3부 ${prefix.replace('Glory_SAB', '')}집`; if (prefix.startsWith('Men_JS_Vol')) return `남성 중앙성가 Vol.${prefix.replace('Men_JS_Vol', '')}`; if (prefix.startsWith('glorymans')) return `남성 영광 찬양`; if (prefix.startsWith('sight')) return `하나님의 시선 Vol.${prefix.replace('sight', '')}집`; if (prefix.startsWith('NewandJoyfulPraises')) return `새롭고 기쁜 찬양 Vol.${prefix.replace('NewandJoyfulPraises', '')}집`; if (prefix.startsWith('ShinSangWooArrange')) { const vol = prefix.replace('ShinSangWooArrange', ''); return vol === '1SSA' ? `신상우 편곡집 Vol.1 (SSA)` : `신상우 편곡집 Vol.${vol}집`; } return prefix.replace(/([A-Z])/g, ' $1').trim().replace(/_/g, ' '); }
 window.openLink = function(url) { window.open(url, '_blank'); return false; }
-function showSelectionPopup(matches, isSetupMode) { const modal = document.getElementById('selection-modal'); const optionsList = document.getElementById('modal-options-list'); optionsList.innerHTML = ''; matches.forEach(match => { const item = document.createElement('div'); item.className = 'modal-option-item'; item.innerHTML = `<strong>${match.title}</strong><span>[${match.collectionName}] 버전으로 ${isSetupMode ? '선택' : '연결'}</span>`; item.onclick = () => { if (isSetupMode) { selectAndSetLink(match); } else { openLink(match.url); modal.style.display = 'none'; } }; optionsList.appendChild(item); }); modal.style.display = 'flex'; modal.onclick = (e) => { if (e.target.id === 'selection-modal') modal.style.display = 'none'; }; }
+function showSelectionPopup(matches, isSetupMode) { 
+    // 중복 곡 선택 팝업도 모달처럼 동작하므로 히스토리 추가 필요
+    openModalWithHistory('selection-modal'); // ✨ 수정됨
+    const optionsList = document.getElementById('modal-options-list'); optionsList.innerHTML = ''; matches.forEach(match => { const item = document.createElement('div'); item.className = 'modal-option-item'; item.innerHTML = `<strong>${match.title}</strong><span>[${match.collectionName}] 버전으로 ${isSetupMode ? '선택' : '연결'}</span>`; item.onclick = () => { if (isSetupMode) { selectAndSetLink(match); } else { openLink(match.url); closeModalWithHistory(); } }; optionsList.appendChild(item); }); 
+}
 
 // ✨ 누락되었던 메인 검색창 함수 추가
 function searchAndRedirect(form) {
@@ -673,7 +731,7 @@ function searchAndRedirect(form) {
 }
 
 // -----------------------------------------------------------
-// 4. 전역 스코프 등록 (버튼 작동 필수)
+// 4. 전역 스코프 등록
 // -----------------------------------------------------------
 window.boardLogin = boardLogin;
 window.boardLogout = boardLogout;
@@ -685,21 +743,24 @@ window.tryEditPost = tryEditPost;
 window.handleLinkClick = handleLinkClick;
 window.searchAndSetLink = searchAndSetLink;
 window.removeLink = removeLink;
-window.closeLinkActionModal = () => { document.getElementById('link-action-modal').style.display = 'none'; };
+window.closeLinkActionModal = closeModalWithHistory; // ✨
 window.openPartLinkModal = openPartLinkModal; 
-window.closePartLinkModal = () => { document.getElementById('part-link-modal').style.display = 'none'; };
+window.closePartLinkModal = closeModalWithHistory; // ✨
 window.savePartLink = savePartLink; 
 window.removePartLink = removePartLink; 
-window.openCreateGroupModal = () => { document.getElementById('create-group-modal').style.display = 'flex'; };
-window.closeCreateGroupModal = () => { document.getElementById('create-group-modal').style.display = 'none'; };
+window.openCreateGroupModal = () => { openModalWithHistory('create-group-modal'); }; // ✨
+window.closeCreateGroupModal = closeModalWithHistory; // ✨
 window.createGroup = createGroup;
 window.inviteMember = inviteMember; 
 window.toggleIntegrated = toggleIntegrated; 
 window.toggleManualLinks = toggleManualLinks; 
 window.openDirectLink = openDirectLink; 
 window.openShortcutLink = openShortcutLink;
-window.openShortcutManager = openShortcutManager;
-window.closeShortcutManager = () => { document.getElementById('shortcut-manager-modal').style.display = 'none'; };
+window.openShortcutManager = () => { 
+    refreshShortcutManager(); 
+    openModalWithHistory('shortcut-manager-modal'); // ✨
+};
+window.closeShortcutManager = closeModalWithHistory; // ✨
 window.configureShortcut = configureShortcut;
 window.clearShortcut = clearShortcut;
 window.searchSharedLinks = searchSharedLinks;
@@ -708,10 +769,10 @@ window.applySharedData = applySharedData;
 window.sharePartLink = sharePartLink;
 window.removePartLink = removePartLink; 
 window.reportSharedLink = reportSharedLink;
-window.searchAndRedirect = searchAndRedirect; // ✨ 전역 등록 추가
+window.searchAndRedirect = searchAndRedirect;
 
 // -----------------------------------------------------------
-// 5. 초기화 리스너 등록 (마지막)
+// 5. 초기화 리스너 등록
 // -----------------------------------------------------------
 window.addEventListener('DOMContentLoaded', () => {
     const remembered = localStorage.getItem('choir_remembered');
@@ -725,10 +786,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const isAutoLogin = localStorage.getItem('choir_auto_login');
     if (isAutoLogin === 'true' && remembered) {
         document.getElementById('auto-login').checked = true;
-        // toggleBoard(true); // 자동로그인 시에는 안펼침 (사용자경험상 이게 나을 수 있음)
+        // toggleBoard(true); // 자동로그인 시 안 펼침
         boardLogin(); 
     } else {
-        // toggleBoard(true); // 기본 상태는 닫힘
+        // toggleBoard(true); // 처음엔 닫힘
     }
 
     loadShortcutLinks();
@@ -737,10 +798,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('keydown', (e) => {
     if (e.key === "Escape") {
-        document.getElementById('selection-modal').style.display = 'none';
-        document.getElementById('create-group-modal').style.display = 'none';
-        document.getElementById('link-action-modal').style.display = 'none';
-        document.getElementById('part-link-modal').style.display = 'none';
-        document.getElementById('shortcut-manager-modal').style.display = 'none';
+        closeModalWithHistory();
     }
 });
