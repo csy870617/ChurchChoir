@@ -32,19 +32,38 @@ export function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => { alert("링크가 복사되었습니다."); }).catch(err => { alert("복사 실패"); });
 }
 
-// 팝업 열기 (히스토리 추가)
+// ✨ 팝업 열기 (히스토리 추가)
 export function openModalWithHistory(modalId) {
     const el = document.getElementById(modalId);
     if (el) {
         el.style.display = 'flex';
+        // 팝업을 열 때 히스토리를 추가하여 '뒤로가기' 시 팝업만 닫히게 함
         history.pushState({ modal: modalId }, null, null);
     }
 }
 
-// 팝업 닫기 (뒤로가기 실행)
+// ✨ 팝업 닫기 (뒤로가기 실행)
 export function closeModalWithHistory() {
+    // 팝업 내 '닫기' 버튼을 누르면 history.back()을 호출하여 popstate 이벤트를 발생시킴
+    // 이렇게 해야 브라우저 뒤로가기와 버튼 클릭이 동일하게 동작함
     history.back(); 
 }
+
+// ✨ 뒤로가기 이벤트 감지 (모든 팝업 닫기)
+window.addEventListener('popstate', () => {
+    const modals = [
+        'selection-modal',
+        'shortcut-manager-modal',
+        'link-action-modal',
+        'part-link-modal',
+        'part-manager-modal', // 찬양곡 관리
+        'play-modal'          // 듣기 팝업
+    ];
+    modals.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+});
 
 // UI 제어
 export function toggleBoard(forceOpen = false, currentGroupId) {
@@ -64,7 +83,6 @@ export function toggleBoard(forceOpen = false, currentGroupId) {
 }
 
 export function toggleIntegrated() {
-    // state.js의 값을 가져오기 위해 main에서 주입받거나 단순 토글만 수행
     const wrapper = document.getElementById('integrated-content-wrapper');
     const toggleIcon = document.getElementById('toggle-icon');
     if (wrapper.style.display === 'none') {

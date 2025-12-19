@@ -4,12 +4,14 @@ import { state, partNames } from "./state.js";
 import { isValidYoutubeUrl, openModalWithHistory, closeModalWithHistory } from "./utils.js";
 import { performSearch, showSelectionPopup } from "./search.js";
 
-// --- 팝업 닫기 함수들 ---
-export function closePartLinkModal() { document.getElementById('part-link-modal').style.display = 'none'; }
-export function closeShortcutManager() { document.getElementById('shortcut-manager-modal').style.display = 'none'; }
-export function closeLinkActionModal() { document.getElementById('link-action-modal').style.display = 'none'; }
-export function closePlayModal() { document.getElementById('play-modal').style.display = 'none'; }
-export function closePartManager() { document.getElementById('part-manager-modal').style.display = 'none'; }
+// --- 팝업 닫기 함수들 (모두 History Back 사용) ---
+// 이제 직접 style.display='none'을 하지 않고, closeModalWithHistory()를 호출합니다.
+// 그러면 utils.js의 popstate 리스너가 실제로 닫습니다.
+export function closePartLinkModal() { closeModalWithHistory(); }
+export function closeShortcutManager() { closeModalWithHistory(); }
+export function closeLinkActionModal() { closeModalWithHistory(); }
+export function closePlayModal() { closeModalWithHistory(); }
+export function closePartManager() { closeModalWithHistory(); }
 
 // --- 찬양곡 슬롯 관리 (Manager) ---
 export function openPartManager() {
@@ -52,10 +54,9 @@ export function openPlayModal(slot) {
 
     const linkData = localStorage.getItem(`partLink_${slot}_all`);
     
+    // ✨ 데이터가 없으면 바로 등록 팝업으로 이동 (묻지 않고 바로)
     if (!linkData) {
-        if(confirm(`${slot}번에 등록된 곡이 없습니다. 곡을 등록하시겠습니까?`)) {
-            configurePart(slot);
-        }
+        configurePart(slot);
         return;
     }
 
@@ -168,7 +169,19 @@ export function removePartLink() {
 // --- 즐겨찾기 관련 ---
 export function loadShortcutLinks() { for (let i = 1; i <= 3; i++) { const linkData = localStorage.getItem(`storedLink${i}`); updateLinkButton(i, linkData ? JSON.parse(linkData) : null); } }
 function updateLinkButton(slot, data) { const btn = document.getElementById(`btn-shortcut-${slot}`); if (btn) { btn.style.backgroundColor = ''; btn.style.color = ''; btn.style.borderColor = ''; if (data && data.url) { btn.innerText = data.title; btn.classList.remove('unlinked'); } else { btn.innerText = `즐겨찾기 ${slot}`; btn.classList.add('unlinked'); } } }
-export function openShortcutLink(slot) { const linkData = localStorage.getItem(`storedLink${slot}`); if (linkData) { const data = JSON.parse(linkData); window.open(data.url, '_blank'); } else { alert("등록된 곡이 없습니다.\n[⚙️ 등록/수정] 버튼을 눌러 곡을 등록해주세요."); } }
+
+// ✨ 즐겨찾기 즉시 등록 (데이터 없으면 바로 검색창)
+export function openShortcutLink(slot) { 
+    const linkData = localStorage.getItem(`storedLink${slot}`); 
+    if (linkData) { 
+        const data = JSON.parse(linkData); 
+        window.open(data.url, '_blank'); 
+    } else { 
+        // 경고창 없이 바로 설정 모달 열기
+        configureShortcut(slot); 
+    } 
+}
+
 export function openShortcutManager() { refreshShortcutManager(); openModalWithHistory('shortcut-manager-modal'); }
 export function refreshShortcutManager() { for (let i = 1; i <= 3; i++) { const linkData = localStorage.getItem(`storedLink${i}`); const titleEl = document.getElementById(`manage-title-${i}`); if (linkData) { const data = JSON.parse(linkData); titleEl.innerText = data.title; titleEl.style.color = '#333'; } else { titleEl.innerText = "설정안됨"; titleEl.style.color = '#ccc'; } } }
 export function configureShortcut(slot) { state.currentLinkSlot = slot; document.getElementById('action-search-input').value = ''; document.getElementById('action-search-message').style.display = 'none'; openModalWithHistory('link-action-modal'); }
@@ -243,7 +256,7 @@ export async function reportSharedLink(docId) {
     try { const docRef = doc(db, "shared_links", docId); const docSnap = await getDoc(docRef); if (docSnap.exists()) { const data = docSnap.data(); const currentReports = (data.reportCount || 0) + 1; if (currentReports >= 3) { await deleteDoc(docRef); alert("신고가 누적되어 해당 데이터가 삭제되었습니다."); document.getElementById('shared-search-msg').innerHTML = "삭제되었습니다. 다시 검색해주세요."; } else { await updateDoc(docRef, { reportCount: currentReports }); alert("신고가 접수되었습니다. (현재 누적: " + currentReports + "회)"); reportedList.push(docId); localStorage.setItem('choir_reported_links', JSON.stringify(reportedList)); } } else { alert("이미 삭제된 데이터입니다."); } } catch (e) { console.error(e); alert("신고 처리 중 오류가 발생했습니다."); }
 }
 
-// ✨ 오류 신고 메일 보내기
+// 오류 신고 메일 보내기
 export function sendErrorReport() {
     const email = "csy0645009@gmail.com";
     const subject = "[성가대 연습실] 오류 신고";
