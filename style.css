@@ -172,34 +172,61 @@ header h1 {
 
 /* Song Links Section */
 .manual-content-area { 
-    text-align: left; /* 좌측 정렬 */
+    text-align: left;
     margin-bottom: 30px; 
 }
 
-/* Play Popup Grid */
+/* ✨ Play Popup Redesign */
 .play-modal-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
-#modal-play-all { grid-column: span 2; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 
-/* Popup Buttons (Pastel Gradient) */
+/* 합창 버튼 (Hero Button) */
+#modal-play-all { 
+    grid-column: span 2; /* 가로 가득 채우기 */
+    background: var(--primary-gradient); /* 메인 컬러 */
+    padding: 18px 0;
+    font-size: 1.1em;
+    font-weight: 800;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+    margin-bottom: 5px;
+}
+
+/* 파트 버튼들 */
 .btn-play {
     width: 100%; padding: 14px 0; color: white;
-    background: linear-gradient(135deg, #b3c0ff 0%, #c4b5fd 100%);
-    border: none; border-radius: 10px; font-size: 1em; font-weight: 700;
+    /* 부드러운 파스텔톤 버튼 */
+    background: linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%); /* 조금 더 세련된 블루톤 */
+    background: #8e9eab; /* fallback */
+    background: -webkit-linear-gradient(to right, #eef2f3, #8e9eab); /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to right, #9FA5D5, #E8F5C8); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    background: linear-gradient(135deg, #9FA5D5 0%, #8ca6db 100%); /* 실제 적용 컬러 */
+    
+    border: none; border-radius: 12px; font-size: 1em; font-weight: 600;
     cursor: pointer; transition: all 0.2s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
 }
 .btn-play:hover { transform: translateY(-2px); filter: brightness(1.05); }
 .btn-play.unlinked { background: #f1f3f5 !important; color: #adb5bd !important; cursor: default; box-shadow: none; }
+
+/* 팝업 제목 스타일 */
+#play-modal h3 {
+    font-size: 1.4em;
+    color: var(--text-main);
+    margin-bottom: 20px;
+    font-weight: 800;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+}
 
 /* Board */
 .board-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f8f9fa; }
 .board-section-header h4 { margin: 0; }
 
-/* Write Button (Light Gray + Black Text) */
+/* Write Button */
 .btn-write {
     background-color: #f1f3f5; color: #333; border: 1px solid #d1d5db;
     border-radius: 30px; padding: 6px 14px; font-size: 0.85em; font-weight: 700;
@@ -216,16 +243,10 @@ header h1 {
 .post-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
 .post-title { font-size: 1.15em; font-weight: 700; color: var(--text-main); margin-right: 10px; }
 
-/* ✨ Post Meta (2 lines) */
 .post-meta { 
-    font-size: 0.85em; 
-    color: #aaa; 
-    text-align: right; 
-    display: flex; 
-    flex-direction: column; /* 세로 배치 */
-    align-items: flex-end; /* 우측 정렬 */
-    gap: 3px; 
-    min-width: 80px; 
+    font-size: 0.85em; color: #aaa; text-align: right; 
+    display: flex; flex-direction: column; align-items: flex-end; 
+    gap: 3px; min-width: 80px; 
 }
 
 .post-body { font-size: 1em; line-height: 1.6; color: #555; white-space: pre-wrap; margin-bottom: 15px; }
@@ -253,7 +274,7 @@ textarea.input-full { height: 150px; resize: vertical; line-height: 1.6; }
 .btn-delete { background-color: #fff; color: var(--danger-red); border: 1px solid var(--danger-red); }
 .btn-delete:hover { background-color: var(--danger-red); color: white; }
 
-/* Bottom Action Buttons (Resized) */
+/* Bottom Action Buttons */
 .bottom-action-row {
     display: flex;
     gap: 10px;
@@ -261,16 +282,14 @@ textarea.input-full { height: 150px; resize: vertical; line-height: 1.6; }
 }
 
 .btn-invite-main {
-    flex: 2; /* 비율 2 (성가대원 초대하기) */
-    padding: 12px 0; background-color: #ffffff;
+    flex: 2; padding: 12px 0; background-color: #ffffff;
     color: #fbc02d; border: 2px solid #FFD700; border-radius: 12px;
     font-size: 1em; font-weight: 700; cursor: pointer; transition: 0.2s;
 }
 .btn-invite-main:hover { background-color: #fffde7; border-color: #fbc02d; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(251, 192, 45, 0.2); }
 
 .btn-report-error {
-    flex: 1; /* 비율 1 (오류신고) */
-    padding: 12px 0; background-color: #ffffff;
+    flex: 1; padding: 12px 0; background-color: #ffffff;
     color: #e74c3c; border: 2px solid #e74c3c; border-radius: 12px;
     font-size: 1em; font-weight: 700; cursor: pointer; transition: 0.2s;
 }
@@ -285,8 +304,15 @@ footer a { color: #999; text-decoration: none; }
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     background: rgba(0, 0, 0, 0.5); display: none; 
     justify-content: center; align-items: center; 
-    z-index: 999; backdrop-filter: blur(5px); 
+    z-index: 999; /* 기본 모달 */
+    backdrop-filter: blur(5px); 
 }
+
+/* ✨ 검색 결과창(selection-modal)은 더 위에 떠야 함 */
+#selection-modal {
+    z-index: 2000; /* 최상위 보장 */
+}
+
 .modal-content { 
     background: #ffffff; padding: 35px; border-radius: 20px; 
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
