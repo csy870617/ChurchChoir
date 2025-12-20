@@ -179,7 +179,6 @@ export async function savePartLink() {
             } catch(e) { console.log("Search save failed", e); }
         } 
         
-        // ✨ alert 제거함
         loadPartLinks(); 
         refreshPartManager(); 
         closePartLinkModal(); 
@@ -197,7 +196,6 @@ export async function savePartLink() {
         await updateDoc(groupRef, { [`partLinks.${slot}.${state.currentPart}`]: dbPartLinks[slot][state.currentPart] });
     }
 
-    // ✨ alert 제거함
     loadPartLinks(); 
     refreshPartManager(); 
     closePartLinkModal(); 
@@ -266,7 +264,6 @@ export async function saveLinkToStorage(slot, match) {
         const groupRef = doc(db, "choir_groups", state.currentGroupId);
         await updateDoc(groupRef, { [`shortcuts.${slot}`]: data });
     }
-    // ✨ alert 제거함
     refreshShortcutManager(); loadShortcutLinks(); closeLinkActionModal(); 
 }
 

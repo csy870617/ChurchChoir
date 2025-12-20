@@ -32,37 +32,32 @@ export function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => { alert("링크가 복사되었습니다."); }).catch(err => { alert("복사 실패"); });
 }
 
-// ✨ 팝업 열기 (히스토리 추가)
+// 팝업 열기 (히스토리 추가)
 export function openModalWithHistory(modalId) {
     const el = document.getElementById(modalId);
     if (el) {
         el.style.display = 'flex';
-        // 팝업을 열 때 히스토리를 추가하여 '뒤로가기' 시 팝업만 닫히게 함
+        // 팝업을 열 때 상태를 저장함
         history.pushState({ modal: modalId }, null, null);
     }
 }
 
-// ✨ 팝업 닫기 (뒤로가기 실행)
+// ✨ 팝업 닫기 (안전장치 추가)
 export function closeModalWithHistory() {
-    // 팝업 내 '닫기' 버튼을 누르면 history.back()을 호출하여 popstate 이벤트를 발생시킴
-    // 이렇게 해야 브라우저 뒤로가기와 버튼 클릭이 동일하게 동작함
-    history.back(); 
+    // 현재 히스토리 상태가 팝업인 경우에만 뒤로가기 실행
+    if (history.state && history.state.modal) {
+        history.back();
+    } else {
+        // 기록이 꼬였거나 없을 때는 그냥 CSS로 닫아버림 (페이지 종료 방지)
+        const modals = document.querySelectorAll('.modal-overlay');
+        modals.forEach(el => el.style.display = 'none');
+    }
 }
 
-// ✨ 뒤로가기 이벤트 감지 (모든 팝업 닫기)
+// 뒤로가기 이벤트 감지 (물리 버튼 대응)
 window.addEventListener('popstate', () => {
-    const modals = [
-        'selection-modal',
-        'shortcut-manager-modal',
-        'link-action-modal',
-        'part-link-modal',
-        'part-manager-modal', // 찬양곡 관리
-        'play-modal'          // 듣기 팝업
-    ];
-    modals.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
+    const modals = document.querySelectorAll('.modal-overlay');
+    modals.forEach(el => el.style.display = 'none');
 });
 
 // UI 제어
