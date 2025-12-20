@@ -5,8 +5,9 @@ export const state = {
     currentLinkSlot: null, 
     currentLoginPw: null, 
     currentPart: null,
-    currentPartSlot: 1, // ✨ 찬양곡 슬롯 번호 추가
-    searchResultsCache: {}
+    currentPartSlot: 1,
+    searchResultsCache: {},
+    lastVisible: null // ✨ 더 보기를 위해 마지막 글 위치 저장
 };
 
 export const partNames = { 'all': '전체', 'sop': '소프라노', 'alt': '알토', 'ten': '테너', 'bas': '베이스' };

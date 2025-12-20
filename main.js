@@ -2,7 +2,8 @@ import { escapeInAppBrowser, toggleBoard, toggleIntegrated, openModalWithHistory
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { auth } from "./config.js";
 import { createGroup, boardLogin, boardLogout, inviteMember } from "./auth.js";
-import { showWriteForm, showBoardList, savePost, tryDeletePost, tryEditPost } from "./board.js";
+// ✨ loadPosts 함수 가져오기
+import { showWriteForm, showBoardList, savePost, tryDeletePost, tryEditPost, loadPosts } from "./board.js";
 import { 
     loadShortcutLinks, openShortcutLink, openShortcutManager, configureShortcut, clearShortcut, removeLink, searchAndSetLink, 
     openDirectLink, loadPartLinks, openPartLinkModal, searchGroupLinks, searchSharedLinks, applySharedData, reportSharedLink, 
@@ -46,6 +47,9 @@ window.removePartLink = removePartLink;
 window.handleLinkClick = handleLinkClick;
 window.searchAndRedirect = searchAndRedirect;
 
+// ✨ 더 보기 버튼 연결 (board.js의 loadPosts(true) 호출)
+window.loadMorePosts = () => loadPosts(true);
+
 // ✨ 찬양곡/오류신고 관련 함수 등록
 window.openPlayModal = openPlayModal;
 window.closePlayModal = closePlayModal;
@@ -60,7 +64,6 @@ window.closeShortcutManager = closeShortcutManager;
 window.closeLinkActionModal = closeLinkActionModal;
 window.closePartLinkModal = closePartLinkModal;
 
-// --- 초기화 이벤트 ---
 window.addEventListener('DOMContentLoaded', () => {
     const remembered = localStorage.getItem('choir_remembered');
     if (remembered) {

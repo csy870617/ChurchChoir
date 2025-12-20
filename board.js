@@ -1,36 +1,66 @@
-import { getDocs, addDoc, deleteDoc, updateDoc, doc, getDoc, query, where, limit, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDocs, addDoc, deleteDoc, updateDoc, doc, getDoc, query, where, limit, orderBy, startAfter } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { db, boardCollection } from "./config.js";
 import { state } from "./state.js";
 import { convertUrlsToLinks } from "./utils.js";
 
-export async function loadPosts() {
+// ✨ 게시글 불러오기 (isMore = true면 '더 보기' 클릭 상황)
+export async function loadPosts(isMore = false) {
     const listEl = document.getElementById('post-items');
-    listEl.innerHTML = '<div class="empty-msg">데이터를 불러오는 중입니다...</div>';
+    const loadMoreBtn = document.getElementById('btn-load-more');
     
+    // 처음 로딩이면 목록 초기화
+    if (!isMore) {
+        listEl.innerHTML = '<div class="empty-msg">데이터를 불러오는 중입니다...</div>';
+        state.lastVisible = null; // 커서 초기화
+        loadMoreBtn.style.display = 'none'; // 버튼 일단 숨김
+    }
+
     try {
-        // ✨ 최적화: 날짜 내림차순 정렬 후 상위 3개만 가져오기
-        const q = query(
-            boardCollection, 
-            where("groupId", "==", state.currentGroupId),
-            orderBy("date", "desc"), 
-            limit(3) // ✨ 20개 -> 3개로 변경
-        );
+        let q;
+        const perPage = 3; // 한 번에 불러올 개수
+
+        if (isMore && state.lastVisible) {
+            // 더 보기: 마지막 글(lastVisible) 다음부터 3개 가져오기
+            q = query(
+                boardCollection, 
+                where("groupId", "==", state.currentGroupId),
+                orderBy("date", "desc"), 
+                startAfter(state.lastVisible),
+                limit(perPage)
+            );
+        } else {
+            // 처음 로딩: 최신순 3개 가져오기
+            q = query(
+                boardCollection, 
+                where("groupId", "==", state.currentGroupId),
+                orderBy("date", "desc"), 
+                limit(perPage)
+            );
+        }
 
         const querySnapshot = await getDocs(q);
-        let posts = [];
         
-        querySnapshot.forEach((docSnap) => { 
-            const data = docSnap.data();
-            posts.push({ id: docSnap.id, ...data }); 
-        });
+        // 처음 로딩 시 기존 '로딩중' 메시지 삭제
+        if (!isMore) listEl.innerHTML = '';
 
-        // (쿼리에서 이미 정렬했지만 안전장치로 유지)
-        posts.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        listEl.innerHTML = '';
-        if (posts.length === 0) { listEl.innerHTML = '<div class="empty-msg">등록된 공지사항이 없습니다.</div>'; return; }
-        
-        posts.forEach(post => {
+        if (querySnapshot.empty) {
+            loadMoreBtn.style.display = 'none'; // 더 가져올 게 없으면 버튼 숨김
+            if (!isMore) listEl.innerHTML = '<div class="empty-msg">등록된 공지사항이 없습니다.</div>';
+            return;
+        }
+
+        // 마지막 문서 저장 (다음 '더 보기'를 위해)
+        state.lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+        // 3개 미만으로 가져왔으면 더 이상 데이터가 없는 것이므로 버튼 숨김
+        if (querySnapshot.docs.length < perPage) {
+            loadMoreBtn.style.display = 'none';
+        } else {
+            loadMoreBtn.style.display = 'block';
+        }
+
+        querySnapshot.forEach((docSnap) => { 
+            const post = { id: docSnap.id, ...docSnap.data() };
             const div = document.createElement('div');
             div.className = 'post-card';
             div.innerHTML = `
@@ -48,12 +78,13 @@ export async function loadPosts() {
                 </div>`;
             listEl.appendChild(div);
         });
+
     } catch (e) { 
         console.error(e);
         if (e.code === 'failed-precondition') {
             console.log("Firestore 색인이 필요합니다. 콘솔의 링크를 확인하세요.");
         }
-        listEl.innerHTML = '<div class="empty-msg">데이터 로딩 실패.<br>(관리자가 콘솔을 확인해주세요)</div>'; 
+        if (!isMore) listEl.innerHTML = '<div class="empty-msg">데이터 로딩 실패.<br>(관리자가 콘솔을 확인해주세요)</div>'; 
     }
 }
 
@@ -71,7 +102,7 @@ export function showBoardList() {
     document.getElementById('board-write').style.display = 'none';
     document.getElementById('board-list').style.display = 'block';
     document.getElementById('btn-show-write').style.display = 'block';
-    loadPosts(); 
+    loadPosts(false); // 처음부터 다시 로드
 }
 
 export async function savePost() {
@@ -96,7 +127,7 @@ export async function tryDeletePost(id) {
     try {
         const docRef = doc(db, "choir_posts", id);
         await deleteDoc(docRef);
-        loadPosts(); 
+        loadPosts(false); // 삭제 후 새로고침
     } catch (e) { console.error(e); alert("삭제 중 오류가 발생했습니다."); }
 }
 
