@@ -8,12 +8,14 @@ import {
     openDirectLink, loadPartLinks, openPartLinkModal, searchGroupLinks, searchSharedLinks, applySharedData, reportSharedLink, 
     savePartLink, sharePartLink, removePartLink, handleLinkClick, refreshShortcutManager, 
     closePartLinkModal, closeShortcutManager, closeLinkActionModal, openPlayModal, closePlayModal, 
-    openPartManager, closePartManager, configurePart, clearPart, sendErrorReport // ✨ 추가됨
+    openPartManager, closePartManager, configurePart, clearPart, sendErrorReport, syncLinksFromDB 
 } from "./links.js"; 
 import { searchAndRedirect } from "./search.js";
 
+// --- 익명 로그인 ---
 signInAnonymously(auth).then(() => console.log("Auth Success")).catch((e) => console.error("Auth Fail", e));
 
+// --- 전역 함수 등록 ---
 window.toggleBoard = toggleBoard;
 window.toggleIntegrated = toggleIntegrated;
 window.createGroup = createGroup;
@@ -51,13 +53,14 @@ window.openPartManager = openPartManager;
 window.closePartManager = closePartManager;
 window.configurePart = configurePart;
 window.clearPart = clearPart;
-window.sendErrorReport = sendErrorReport; // ✨ 연결 완료
+window.sendErrorReport = sendErrorReport; 
 
 // 모달 닫기 헬퍼들
 window.closeShortcutManager = closeShortcutManager;
 window.closeLinkActionModal = closeLinkActionModal;
 window.closePartLinkModal = closePartLinkModal;
 
+// --- 초기화 이벤트 ---
 window.addEventListener('DOMContentLoaded', () => {
     const remembered = localStorage.getItem('choir_remembered');
     if (remembered) {

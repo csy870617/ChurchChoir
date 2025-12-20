@@ -2,9 +2,10 @@ import { getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasej
 import { groupsCollection } from "./config.js";
 import { state } from "./state.js";
 import { loadPosts } from "./board.js"; 
-import { loadShortcutLinks } from "./links.js";
+// ✨ syncLinksFromDB 추가 (로그인 시 링크 동기화)
+import { loadShortcutLinks, syncLinksFromDB } from "./links.js";
 
-// ✨ 그룹 만들기 (확인 팝업 삭제, 문구 수정)
+// 그룹 만들기
 export async function createGroup() {
     const name = document.getElementById('login-church').value.trim();
     const pw = document.getElementById('login-pw').value.trim();
@@ -19,12 +20,18 @@ export async function createGroup() {
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) { 
-            // ✨ 수정된 문구
             alert("이미 존재하는 그룹입니다. 다른 아이디나 비밀번호를 입력해주세요."); 
             return; 
         }
         
-        await addDoc(groupsCollection, { churchName: name, password: pw, createdAt: new Date().toISOString() });
+        await addDoc(groupsCollection, { 
+            churchName: name, 
+            password: pw, 
+            createdAt: new Date().toISOString(),
+            // 초기 빈 데이터 생성
+            shortcuts: {}, 
+            partLinks: {} 
+        });
         alert(`'${name}' 그룹이 생성되었습니다! 이제 [로그인] 버튼을 눌러 입장하세요.`);
         
     } catch (e) { 
@@ -53,8 +60,10 @@ export async function boardLogin() {
         }
 
         const groupDoc = querySnapshot.docs[0];
+        const groupData = groupDoc.data();
+
         state.currentGroupId = groupDoc.id; 
-        state.currentChurchName = groupDoc.data().churchName;
+        state.currentChurchName = groupData.churchName;
         state.currentLoginPw = inputPw; 
         
         if (rememberMe) localStorage.setItem('choir_remembered', JSON.stringify({ name: inputName, pw: inputPw }));
@@ -74,11 +83,13 @@ export async function boardLogin() {
         const btnWrite = document.getElementById('btn-show-write');
         if(btnWrite) btnWrite.style.display = 'block';
         
+        // 게시글 로드
         const boardModule = await import("./board.js");
         boardModule.loadPosts();
         
-        const linksModule = await import("./links.js");
-        linksModule.loadShortcutLinks();
+        // ✨ DB에 저장된 링크 정보 동기화
+        syncLinksFromDB(groupData);
+
     } catch (e) { console.error(e); alert("로그인 중 오류가 발생했습니다."); }
 }
 
