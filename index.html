@@ -66,8 +66,8 @@
                         </div>
 
                         <div class="login-actions">
-                            <button onclick="createGroup()" class="btn-create-group">그룹 만들기</button>
-                            <button onclick="boardLogin()" class="login-btn">로그인</button>
+                            <button type="button" onclick="createGroup()" class="btn-create-group">그룹 만들기</button>
+                            <button type="button" onclick="boardLogin()" class="login-btn">로그인</button>
                         </div>
                     </div>
                 </div>
@@ -126,8 +126,8 @@
                             </div>
                             <textarea id="write-content" class="input-full" placeholder="공지할 내용을 자유롭게 작성하세요"></textarea>
                             <div style="text-align:right; margin-top:15px;">
-                                <button onclick="showBoardList()" class="btn-small btn-cancel" style="padding:8px 15px; font-size:0.95em;">취소</button>
-                                <button onclick="savePost()" class="btn-small btn-save" style="padding:8px 15px; font-size:0.95em;">등록</button>
+                                <button type="button" onclick="showBoardList()" class="btn-small btn-cancel" style="padding:8px 15px; font-size:0.95em;">취소</button>
+                                <button type="button" onclick="savePost()" class="btn-small btn-save" style="padding:8px 15px; font-size:0.95em;">등록</button>
                             </div>
                         </div>
                     </div>
@@ -178,7 +178,7 @@
                 <div class="shortcut-info"><span class="slot-label">즐겨찾기 3</span><strong id="manage-title-3" class="slot-title">설정안됨</strong></div>
                 <div class="shortcut-actions"><button class="btn-small btn-search-slot" onclick="configureShortcut(3)">검색</button><button class="btn-small btn-delete-slot" onclick="clearShortcut(3)">삭제</button></div>
             </div>
-            <div style="text-align: right; margin-top: 20px;"><button onclick="closeShortcutManager()" class="btn-small btn-cancel" style="padding: 10px 20px;">닫기</button></div>
+            <div style="text-align: right; margin-top: 20px;"><button type="button" onclick="closeShortcutManager()" class="btn-small btn-cancel" style="padding: 10px 20px;">닫기</button></div>
         </div>
     </div>
 
@@ -198,7 +198,7 @@
                 <div class="shortcut-info"><span class="slot-label">링크 3</span><strong id="part-manage-title-3" class="slot-title">설정안됨</strong></div>
                 <div class="shortcut-actions"><button class="btn-small btn-search-slot" onclick="configurePart(3)">선택</button><button class="btn-small btn-delete-slot" onclick="clearPart(3)">삭제</button></div>
             </div>
-            <div style="text-align: right; margin-top: 20px;"><button onclick="closePartManager()" class="btn-small btn-cancel" style="padding: 10px 20px;">닫기</button></div>
+            <div style="text-align: right; margin-top: 20px;"><button type="button" onclick="closePartManager()" class="btn-small btn-cancel" style="padding: 10px 20px;">닫기</button></div>
         </div>
     </div>
 
@@ -212,7 +212,7 @@
                     <button type="submit">검색</button>
                 </form>
                 <div id="action-search-message" style="color: var(--danger-red); font-size: 0.9em; margin-top: 10px; display: none;"></div>
-                <div style="text-align: right; margin-top: 15px;"><button onclick="closeLinkActionModal()" class="btn-small btn-cancel">취소</button></div>
+                <div style="text-align: right; margin-top: 15px;"><button type="button" onclick="closeLinkActionModal()" class="btn-small btn-cancel">취소</button></div>
             </div>
         </div>
     </div>
@@ -224,14 +224,14 @@
                 <div id="group-search-area" style="margin-bottom: 10px; display:none;">
                     <div class="link-action-search" style="margin-bottom: 5px;">
                         <input type="text" id="group-search-input" placeholder="우리 교회에서 저장한 곡 검색" onkeydown="if(event.key === 'Enter') { event.preventDefault(); searchGroupLinks(); }">
-                        <button onclick="searchGroupLinks()" style="background: var(--primary-color);">검색</button>
+                        <button type="button" onclick="searchGroupLinks()" style="background: var(--primary-color);">검색</button>
                     </div>
                     <div id="group-search-msg" style="font-size: 0.85em; color: #888;"></div>
                 </div>
                 <div id="shared-search-area" style="margin-bottom: 20px; display:none;">
                     <div class="link-action-search" style="margin-bottom: 5px;">
                         <input type="text" id="shared-search-input" placeholder="다른 교회에서 공유한 곡 검색" onkeydown="if(event.key === 'Enter') { event.preventDefault(); searchSharedLinks(); }">
-                        <button onclick="searchSharedLinks()" style="background: #6c757d;">검색</button>
+                        <button type="button" onclick="searchSharedLinks()" style="background: #6c757d;">검색</button>
                     </div>
                     <div id="shared-search-msg" style="font-size: 0.85em; color: #888;"></div>
                 </div>
@@ -248,8 +248,8 @@
                     <div class="part-input-group"><input type="text" id="part-link-url-bas" class="input-full-url input-part-small" placeholder="베이스 링크"></div>
                 </div>
                 <div class="modal-footer-row">
-                    <div class="left-group"><button class="btn-small btn-remove-final" onclick="removePartLink()">링크 해제</button></div>
-                    <div class="right-group"><button onclick="savePartLink()" class="btn-small btn-save">저장</button><button onclick="sharePartLink()" class="btn-small btn-share">공유</button><button onclick="closePartLinkModal()" class="btn-small btn-cancel">닫기</button></div>
+                    <div class="left-group"><button type="button" class="btn-small btn-remove-final" onclick="removePartLink()">링크 해제</button></div>
+                    <div class="right-group"><button type="button" onclick="savePartLink()" class="btn-small btn-save">저장</button><button type="button" onclick="sharePartLink()" class="btn-small btn-share">공유</button><button type="button" onclick="closePartLinkModal()" class="btn-small btn-cancel">닫기</button></div>
                 </div>
             </div>
         </div>
@@ -266,7 +266,7 @@
                 <button id="modal-play-bas" class="btn-play" onclick="openDirectLink('bas')">베이스</button>
             </div>
             <div style="text-align: center; margin-top: 25px;">
-                <button onclick="closePlayModal()" class="btn-small btn-cancel" style="padding: 10px 30px;">닫기</button>
+                <button type="button" onclick="closePlayModal()" class="btn-small btn-cancel" style="padding: 10px 30px;">닫기</button>
             </div>
         </div>
     </div>

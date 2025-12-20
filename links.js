@@ -11,7 +11,7 @@ export function closeLinkActionModal() { closeModalWithHistory(); }
 export function closePlayModal() { closeModalWithHistory(); }
 export function closePartManager() { closeModalWithHistory(); }
 
-// --- 전역 캐시 데이터 (DB 동기화용) ---
+// --- 전역 캐시 데이터 ---
 let dbShortcuts = {};
 let dbPartLinks = {};
 
@@ -71,7 +71,6 @@ export function openPlayModal(slot) {
     const linkData = slotData ? slotData['all'] : null;
     
     if (!linkData) {
-        // 데이터 없으면 즉시 등록 팝업 연결
         configurePart(slot);
         return;
     }
@@ -180,7 +179,7 @@ export async function savePartLink() {
             } catch(e) { console.log("Search save failed", e); }
         } 
         
-        alert("저장되었습니다!"); 
+        // ✨ alert 제거함
         loadPartLinks(); 
         refreshPartManager(); 
         closePartLinkModal(); 
@@ -198,9 +197,9 @@ export async function savePartLink() {
         await updateDoc(groupRef, { [`partLinks.${slot}.${state.currentPart}`]: dbPartLinks[slot][state.currentPart] });
     }
 
+    // ✨ alert 제거함
     loadPartLinks(); 
     refreshPartManager(); 
-    alert("저장되었습니다!"); 
     closePartLinkModal(); 
 }
 
@@ -267,14 +266,13 @@ export async function saveLinkToStorage(slot, match) {
         const groupRef = doc(db, "choir_groups", state.currentGroupId);
         await updateDoc(groupRef, { [`shortcuts.${slot}`]: data });
     }
-    alert("저장되었습니다.");
+    // ✨ alert 제거함
     refreshShortcutManager(); loadShortcutLinks(); closeLinkActionModal(); 
 }
 
 export async function removeLink() { 
     const inputPw = document.getElementById('action-link-pw').value.trim(); 
     if (!state.currentLoginPw) { alert("로그인 후 이용 가능합니다."); return; } 
-    // 비번 체크는 편의상 생략 또는 추가 가능
     if(confirm(`정말 즐겨찾기 ${state.currentLinkSlot}을(를) 해제하시겠습니까?`)) { 
         delete dbShortcuts[state.currentLinkSlot];
         if (state.currentGroupId) {
