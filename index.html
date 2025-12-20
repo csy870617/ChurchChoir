@@ -36,7 +36,7 @@
             </p>
         </div>
         
-        <form class="custom-search-form" onsubmit="return searchAndRedirect(this);">
+        <form class="custom-search-form" onsubmit="event.preventDefault(); searchAndRedirect(this);">
             <input type="text" name="query" id="search-input" placeholder="찬양곡 제목 입력..." required>
             <button type="submit">검색</button>
         </form>
@@ -207,7 +207,7 @@
             <h3 id="action-modal-title">즐겨찾기 설정</h3>
             <div class="action-section">
                 <div class="section-title">검색 및 설정</div>
-                <form class="link-action-search" onsubmit="return searchAndSetLink(this);">
+                <form class="link-action-search" onsubmit="event.preventDefault(); searchAndSetLink(this);">
                     <input type="text" name="setupQuery" id="action-search-input" placeholder="찬양곡 제목 입력..." required>
                     <button type="submit">검색</button>
                 </form>
