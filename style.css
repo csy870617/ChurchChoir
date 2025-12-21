@@ -185,8 +185,8 @@ header h1 {
 
 /* 합창 버튼 (Hero Button) */
 #modal-play-all { 
-    grid-column: span 2; /* 가로 가득 채우기 */
-    background: var(--primary-gradient); /* 메인 컬러 */
+    grid-column: span 2; 
+    background: var(--primary-gradient); 
     padding: 18px 0;
     font-size: 1.1em;
     font-weight: 800;
@@ -198,13 +198,7 @@ header h1 {
 /* 파트 버튼들 */
 .btn-play {
     width: 100%; padding: 14px 0; color: white;
-    /* 부드러운 파스텔톤 버튼 */
-    background: linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%); /* 조금 더 세련된 블루톤 */
-    background: #8e9eab; /* fallback */
-    background: -webkit-linear-gradient(to right, #eef2f3, #8e9eab); /* Chrome 10-25, Safari 5.1-6 */
-    background: linear-gradient(to right, #9FA5D5, #E8F5C8); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-    background: linear-gradient(135deg, #9FA5D5 0%, #8ca6db 100%); /* 실제 적용 컬러 */
-    
+    background: linear-gradient(135deg, #9FA5D5 0%, #8ca6db 100%);
     border: none; border-radius: 12px; font-size: 1em; font-weight: 600;
     cursor: pointer; transition: all 0.2s ease;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
@@ -274,6 +268,14 @@ textarea.input-full { height: 150px; resize: vertical; line-height: 1.6; }
 .btn-delete { background-color: #fff; color: var(--danger-red); border: 1px solid var(--danger-red); }
 .btn-delete:hover { background-color: var(--danger-red); color: white; }
 
+/* Load More Button */
+.btn-load-more {
+    width: 100%; padding: 12px; margin-top: 15px; background-color: #f8f9fa;
+    color: #555; border: 1px solid #e2e8f0; border-radius: 10px;
+    font-size: 0.95em; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+}
+.btn-load-more:hover { background-color: #e9ecef; color: #333; }
+
 /* Bottom Action Buttons */
 .bottom-action-row {
     display: flex;
@@ -295,6 +297,11 @@ textarea.input-full { height: 150px; resize: vertical; line-height: 1.6; }
 }
 .btn-report-error:hover { background-color: #fff5f5; transform: translateY(-2px); }
 
+/* ✨ Share Hint */
+.share-hint {
+    font-size: 0.8em; color: #888; margin-top: 8px; text-align: center;
+}
+
 .empty-msg { text-align: center; color: #aaa; padding: 40px; font-weight: 500; }
 footer { font-size: 0.9em; color: #999; font-weight: 500; margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px; line-height: 1.6; }
 footer a { color: #999; text-decoration: none; }
@@ -304,14 +311,11 @@ footer a { color: #999; text-decoration: none; }
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     background: rgba(0, 0, 0, 0.5); display: none; 
     justify-content: center; align-items: center; 
-    z-index: 999; /* 기본 모달 */
-    backdrop-filter: blur(5px); 
+    z-index: 999; backdrop-filter: blur(5px); 
 }
 
-/* ✨ 검색 결과창(selection-modal)은 더 위에 떠야 함 */
-#selection-modal {
-    z-index: 2000; /* 최상위 보장 */
-}
+/* 검색 결과창 최상위 */
+#selection-modal { z-index: 2000; }
 
 .modal-content { 
     background: #ffffff; padding: 35px; border-radius: 20px; 
@@ -361,22 +365,3 @@ footer a { color: #999; text-decoration: none; }
 .shortcut-actions { display: flex; gap: 5px; margin-left: 10px; }
 .btn-search-slot { background-color: var(--primary-color); color: white; border: none; }
 .btn-delete-slot { background-color: #fff; color: var(--danger-red); border: 1px solid var(--danger-red); }
-
-/* ✨ Load More Button */
-.btn-load-more {
-    width: 100%;
-    padding: 12px;
-    margin-top: 15px;
-    background-color: #f8f9fa;
-    color: #555;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 0.95em;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.btn-load-more:hover {
-    background-color: #e9ecef;
-    color: #333;
-}

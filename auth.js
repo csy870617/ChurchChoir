@@ -2,7 +2,6 @@ import { getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasej
 import { groupsCollection } from "./config.js";
 import { state } from "./state.js";
 import { loadPosts } from "./board.js"; 
-// ✨ syncLinksFromDB 추가 (로그인 시 링크 동기화)
 import { loadShortcutLinks, syncLinksFromDB } from "./links.js";
 
 // 그룹 만들기
@@ -28,7 +27,6 @@ export async function createGroup() {
             churchName: name, 
             password: pw, 
             createdAt: new Date().toISOString(),
-            // 초기 빈 데이터 생성
             shortcuts: {}, 
             partLinks: {} 
         });
@@ -55,7 +53,10 @@ export async function boardLogin() {
         const querySnapshot = await getDocs(q);
         
         if (querySnapshot.empty) { 
-            if(!localStorage.getItem('choir_auto_login')) alert("교회 이름 또는 비밀번호가 올바르지 않습니다.\n아직 그룹이 없다면 [그룹 만들기]를 먼저 해주세요.");
+            // 자동 로그인 시도가 아닐 때만 경고창 표시
+            if(!localStorage.getItem('choir_auto_login') && !window.isMagicLogin) {
+                alert("교회 이름 또는 비밀번호가 올바르지 않습니다.\n아직 그룹이 없다면 [그룹 만들기]를 먼저 해주세요.");
+            }
             return; 
         }
 
@@ -67,7 +68,7 @@ export async function boardLogin() {
         state.currentLoginPw = inputPw; 
         
         if (rememberMe) localStorage.setItem('choir_remembered', JSON.stringify({ name: inputName, pw: inputPw }));
-        else localStorage.removeItem('choir_remembered');
+        else if (!autoLogin) localStorage.removeItem('choir_remembered'); // 자동로그인이면 유지
 
         if (autoLogin) {
             localStorage.setItem('choir_auto_login', 'true');
@@ -83,11 +84,9 @@ export async function boardLogin() {
         const btnWrite = document.getElementById('btn-show-write');
         if(btnWrite) btnWrite.style.display = 'block';
         
-        // 게시글 로드
         const boardModule = await import("./board.js");
         boardModule.loadPosts();
         
-        // ✨ DB에 저장된 링크 정보 동기화
         syncLinksFromDB(groupData);
 
     } catch (e) { console.error(e); alert("로그인 중 오류가 발생했습니다."); }
@@ -103,9 +102,39 @@ export function boardLogout() {
     document.getElementById('login-section').style.display = 'block';
     const btnWrite = document.getElementById('btn-show-write');
     if(btnWrite) btnWrite.style.display = 'none';
+    
+    // 로그아웃 시 URL 파라미터도 지워서 재로그인 방지
+    window.history.replaceState({}, document.title, window.location.pathname);
 }
 
+// ✨ 초대 링크 공유 (자동 로그인 기능 추가)
 export async function inviteMember() {
-    const shareData = { title: '[성가대 연습실] 찬양곡 미리듣기', text: '', url: 'https://csy870617.github.io/faiths/' };
-    if (navigator.share) { try { await navigator.share(shareData); } catch (err) { if (err.name !== 'AbortError') navigator.clipboard.writeText(shareData.url).then(() => alert("링크 복사 완료")); } } else { navigator.clipboard.writeText(shareData.url).then(() => alert("링크 복사 완료")); }
+    let shareUrl = 'https://csy870617.github.io/faiths/';
+    let title = '[성가대 연습실]';
+    let text = '찬양곡 연습하러 오세요!';
+
+    // 현재 로그인 상태라면, 접속 정보를 포함한 '매직 링크' 생성
+    if (state.currentGroupId && state.currentChurchName && state.currentLoginPw) {
+        const baseUrl = window.location.origin + window.location.pathname;
+        const params = new URLSearchParams();
+        params.set('church', state.currentChurchName);
+        params.set('pw', state.currentLoginPw);
+        
+        shareUrl = `${baseUrl}?${params.toString()}`;
+        title = `[${state.currentChurchName} 성가대]`;
+        text = `링크를 누르면 자동으로 로그인됩니다. 들어와서 찬양곡을 확인하세요!`;
+    }
+
+    const shareData = { title: title, text: text, url: shareUrl };
+
+    if (navigator.share) { 
+        try { await navigator.share(shareData); } 
+        catch (err) { if (err.name !== 'AbortError') copyToClipboard(shareUrl); } 
+    } else { 
+        copyToClipboard(shareUrl); 
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => alert("초대 링크가 복사되었습니다!\n카톡이나 문자에 붙여넣기 하세요.")).catch(() => prompt("이 링크를 복사해서 공유하세요:", text));
 }

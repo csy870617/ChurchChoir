@@ -2,7 +2,6 @@ import { escapeInAppBrowser, toggleBoard, toggleIntegrated, openModalWithHistory
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { auth } from "./config.js";
 import { createGroup, boardLogin, boardLogout, inviteMember } from "./auth.js";
-// ✨ loadPosts 함수 가져오기
 import { showWriteForm, showBoardList, savePost, tryDeletePost, tryEditPost, loadPosts } from "./board.js";
 import { 
     loadShortcutLinks, openShortcutLink, openShortcutManager, configureShortcut, clearShortcut, removeLink, searchAndSetLink, 
@@ -13,10 +12,8 @@ import {
 } from "./links.js"; 
 import { searchAndRedirect } from "./search.js";
 
-// --- 익명 로그인 ---
 signInAnonymously(auth).then(() => console.log("Auth Success")).catch((e) => console.error("Auth Fail", e));
 
-// --- 전역 함수 등록 ---
 window.toggleBoard = toggleBoard;
 window.toggleIntegrated = toggleIntegrated;
 window.createGroup = createGroup;
@@ -46,11 +43,8 @@ window.sharePartLink = sharePartLink;
 window.removePartLink = removePartLink;
 window.handleLinkClick = handleLinkClick;
 window.searchAndRedirect = searchAndRedirect;
-
-// ✨ 더 보기 버튼 연결 (board.js의 loadPosts(true) 호출)
 window.loadMorePosts = () => loadPosts(true);
 
-// ✨ 찬양곡/오류신고 관련 함수 등록
 window.openPlayModal = openPlayModal;
 window.closePlayModal = closePlayModal;
 window.openPartManager = openPartManager;
@@ -59,24 +53,46 @@ window.configurePart = configurePart;
 window.clearPart = clearPart;
 window.sendErrorReport = sendErrorReport; 
 
-// 모달 닫기 헬퍼들
 window.closeShortcutManager = closeShortcutManager;
 window.closeLinkActionModal = closeLinkActionModal;
 window.closePartLinkModal = closePartLinkModal;
 
+// ✨ 초기화 이벤트 (자동 로그인 로직 강화)
 window.addEventListener('DOMContentLoaded', () => {
-    const remembered = localStorage.getItem('choir_remembered');
-    if (remembered) {
-        const { name, pw } = JSON.parse(remembered);
-        document.getElementById('login-church').value = name;
-        document.getElementById('login-pw').value = pw;
-        document.getElementById('remember-me').checked = true;
-    }
+    // 1. URL 파라미터 확인 (매직 링크)
+    const urlParams = new URLSearchParams(window.location.search);
+    const linkChurch = urlParams.get('church');
+    const linkPw = urlParams.get('pw');
 
-    const isAutoLogin = localStorage.getItem('choir_auto_login');
-    if (isAutoLogin === 'true' && remembered) {
-        document.getElementById('auto-login').checked = true;
-        boardLogin(); 
+    if (linkChurch && linkPw) {
+        // 매직 링크로 접속한 경우
+        document.getElementById('login-church').value = linkChurch;
+        document.getElementById('login-pw').value = linkPw;
+        
+        // 플래그 설정 (로그인 실패 시 경고창 띄우지 않기 위해)
+        window.isMagicLogin = true;
+        
+        // 자동 로그인 시도
+        boardLogin().then(() => {
+            // 로그인 성공 후 주소창 깨끗하게 정리 (보안상 좋음)
+            window.history.replaceState({}, document.title, window.location.pathname);
+        });
+        
+    } else {
+        // 2. 기존 저장된 정보 확인 (일반 접속)
+        const remembered = localStorage.getItem('choir_remembered');
+        if (remembered) {
+            const { name, pw } = JSON.parse(remembered);
+            document.getElementById('login-church').value = name;
+            document.getElementById('login-pw').value = pw;
+            document.getElementById('remember-me').checked = true;
+        }
+
+        const isAutoLogin = localStorage.getItem('choir_auto_login');
+        if (isAutoLogin === 'true' && remembered) {
+            document.getElementById('auto-login').checked = true;
+            boardLogin(); 
+        }
     }
 
     loadShortcutLinks();
