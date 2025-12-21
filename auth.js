@@ -109,7 +109,7 @@ export function boardLogout() {
 
 // ✨ 초대 링크 공유 (자동 로그인 기능 추가)
 export async function inviteMember() {
-    let shareUrl = 'https://csy870617.github.io/faiths/';
+    let shareUrl = 'https://csy870617.github.io/ChurchChoir/';
     let title = '[성가대 연습실]';
     let text = '찬양곡 연습하러 오세요!';
 
@@ -122,7 +122,7 @@ export async function inviteMember() {
         
         shareUrl = `${baseUrl}?${params.toString()}`;
         title = `[${state.currentChurchName} 성가대]`;
-        text = `링크를 누르면 자동으로 로그인됩니다. 들어와서 찬양곡을 확인하세요!`;
+        text = `들어와서 찬양곡을 확인하세요!`;
     }
 
     const shareData = { title: title, text: text, url: shareUrl };

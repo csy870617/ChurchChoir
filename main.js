@@ -12,8 +12,7 @@ import {
 } from "./links.js"; 
 import { searchAndRedirect } from "./search.js";
 
-signInAnonymously(auth).then(() => console.log("Auth Success")).catch((e) => console.error("Auth Fail", e));
-
+// --- 전역 함수 등록 ---
 window.toggleBoard = toggleBoard;
 window.toggleIntegrated = toggleIntegrated;
 window.createGroup = createGroup;
@@ -57,24 +56,50 @@ window.closeShortcutManager = closeShortcutManager;
 window.closeLinkActionModal = closeLinkActionModal;
 window.closePartLinkModal = closePartLinkModal;
 
-// ✨ 초기화 이벤트 (자동 로그인 로직 강화)
+// ✨ 초기화 이벤트 (순서 중요: 인증 -> 로직 실행)
 window.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. 먼저 익명 로그인을 시도합니다.
+    signInAnonymously(auth).then(() => {
+        console.log("Auth Success"); // 인증 성공!
+
+        // 2. 인증이 성공한 후에야 DB 조회(로그인 시도)를 시작합니다.
+        checkAndLogin();
+        
+        // 3. 로컬에 저장된 기본 링크 정보 로드 (화면 그리기용)
+        loadShortcutLinks();
+        loadPartLinks(); 
+
+    }).catch((e) => {
+        console.error("Auth Fail", e);
+        alert("서버 연결에 실패했습니다. 인터넷 상태를 확인하거나 새로고침 해주세요.");
+    });
+});
+
+// 키보드 이벤트
+document.addEventListener('keydown', (e) => {
+    if (e.key === "Escape") {
+        closeModalWithHistory();
+    }
+});
+
+// ✨ 로그인 상태 체크 및 실행 함수 (분리됨)
+function checkAndLogin() {
     // 1. URL 파라미터 확인 (매직 링크)
     const urlParams = new URLSearchParams(window.location.search);
     const linkChurch = urlParams.get('church');
     const linkPw = urlParams.get('pw');
 
     if (linkChurch && linkPw) {
-        // 매직 링크로 접속한 경우
+        // 매직 링크 접속 시
         document.getElementById('login-church').value = linkChurch;
         document.getElementById('login-pw').value = linkPw;
         
-        // 플래그 설정 (로그인 실패 시 경고창 띄우지 않기 위해)
-        window.isMagicLogin = true;
+        window.isMagicLogin = true; // 경고창 방지 플래그
         
         // 자동 로그인 시도
         boardLogin().then(() => {
-            // 로그인 성공 후 주소창 깨끗하게 정리 (보안상 좋음)
+            // 성공 시 주소창 깔끔하게 정리
             window.history.replaceState({}, document.title, window.location.pathname);
         });
         
@@ -94,13 +119,4 @@ window.addEventListener('DOMContentLoaded', () => {
             boardLogin(); 
         }
     }
-
-    loadShortcutLinks();
-    loadPartLinks(); 
-});
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === "Escape") {
-        closeModalWithHistory();
-    }
-});
+}
