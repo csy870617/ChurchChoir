@@ -85,8 +85,9 @@ export function boardLogout() {
     window.history.replaceState({}, document.title, window.location.pathname);
 }
 
-// ✨ 카카오톡 공유하기 (이미지 테스트 버전)
+// ✨ 카카오톡 공유하기 (에러 진단 모드)
 export function inviteMember() {
+    // 1. 카카오 SDK 초기화
     if (!Kakao.isInitialized()) {
         Kakao.init('c3fad3332df7403992db3c02afd081fa'); 
     }
@@ -104,12 +105,13 @@ export function inviteMember() {
         description = '👇 버튼을 누르면 자동으로 로그인됩니다.';
     }
 
+    // 2. 카카오톡 전송 시도
     Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
             title: title,
             description: description,
-            // ✨ [테스트] 카카오 라이언 이미지 (이게 나오면 코드는 정상, 목사님 파일이 문제임)
+            // 진단을 위해 안전한 샘플 이미지 사용
             imageUrl: 'https://k.kakaocdn.net/14/dn/btq831qcgZ/k87fHk0Kk9e97o9499p9k0/o.jpg',
             link: {
                 mobileWebUrl: shareUrl,
@@ -118,12 +120,16 @@ export function inviteMember() {
         },
         buttons: [
             {
-                title: '입장하기', 
+                title: '입장하기',
                 link: {
                     mobileWebUrl: shareUrl,
                     webUrl: shareUrl,
                 },
             },
         ],
+        // ✨ 진단 코드: 실패 시 에러 내용을 경고창으로 띄움
+        fail: function(err) {
+            alert('카톡 공유 에러: ' + JSON.stringify(err));
+        },
     });
 }
