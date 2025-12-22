@@ -4,7 +4,7 @@ import { state } from "./state.js";
 import { loadPosts } from "./board.js"; 
 import { loadShortcutLinks, syncLinksFromDB } from "./links.js";
 
-// ... (createGroup, boardLogin, boardLogout 기존 코드 유지 - 생략 없이 전체 코드 제공) ...
+// ... (createGroup, boardLogin, boardLogout 코드는 기존 그대로 유지합니다. 필요하면 위에서 복사하세요) ...
 
 export async function createGroup() {
     const name = document.getElementById('login-church').value.trim();
@@ -69,7 +69,7 @@ export function boardLogout() {
     window.history.replaceState({}, document.title, window.location.pathname);
 }
 
-// ✨ [완전 변경] 모바일 표준 공유 (가장 안정적)
+// ✨ [완전 순정] 기본 공유 기능 (모든 환경에서 강제 실행)
 export async function inviteMember() {
     let shareUrl = 'https://csy870617.github.io/ChurchChoir/';
     let title = '성가대 연습실';
@@ -85,7 +85,8 @@ export async function inviteMember() {
         text = `👇 링크를 누르면 자동으로 로그인됩니다.`;
     }
 
-    // 1. 모바일 '공유하기' 패널 열기 (카톡, 문자 등 선택 가능)
+    // 카카오 스크립트 삭제했으므로 이제 회색 화면 안 뜹니다.
+    // 무조건 핸드폰 기본 공유 창을 띄웁니다.
     if (navigator.share) {
         try {
             await navigator.share({
@@ -93,16 +94,12 @@ export async function inviteMember() {
                 text: text,
                 url: shareUrl,
             });
-            console.log("공유 성공");
         } catch (err) {
-            // 사용자가 공유 창을 닫거나 취소한 경우 (에러 아님)
-            if (err.name !== 'AbortError') {
-                console.log('공유 실패:', err);
-                copyToClipboard(shareUrl);
-            }
+            // 사용자가 취소했을 때만 여기로 옴 (에러 아님)
+            if (err.name !== 'AbortError') console.error('Share failed:', err);
         }
     } else {
-        // 2. PC에서는 클립보드 복사
+        // PC 등 정말로 지원 안 하는 경우에만 복사
         copyToClipboard(shareUrl);
     }
 }
