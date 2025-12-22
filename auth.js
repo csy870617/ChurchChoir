@@ -53,7 +53,6 @@ export async function boardLogin() {
         const querySnapshot = await getDocs(q);
         
         if (querySnapshot.empty) { 
-            // 자동 로그인 시도가 아닐 때만 경고창 표시
             if(!localStorage.getItem('choir_auto_login') && !window.isMagicLogin) {
                 alert("교회 이름 또는 비밀번호가 올바르지 않습니다.\n아직 그룹이 없다면 [그룹 만들기]를 먼저 해주세요.");
             }
@@ -68,7 +67,7 @@ export async function boardLogin() {
         state.currentLoginPw = inputPw; 
         
         if (rememberMe) localStorage.setItem('choir_remembered', JSON.stringify({ name: inputName, pw: inputPw }));
-        else if (!autoLogin) localStorage.removeItem('choir_remembered'); // 자동로그인이면 유지
+        else if (!autoLogin) localStorage.removeItem('choir_remembered');
 
         if (autoLogin) {
             localStorage.setItem('choir_auto_login', 'true');
@@ -103,17 +102,16 @@ export function boardLogout() {
     const btnWrite = document.getElementById('btn-show-write');
     if(btnWrite) btnWrite.style.display = 'none';
     
-    // 로그아웃 시 URL 파라미터도 지워서 재로그인 방지
     window.history.replaceState({}, document.title, window.location.pathname);
 }
 
-// ✨ 초대 링크 공유 (자동 로그인 기능 추가)
+// ✨ 초대 링크 공유 (디자인 개선)
 export async function inviteMember() {
     let shareUrl = 'https://csy870617.github.io/ChurchChoir/';
-    let title = '[성가대 연습실]';
+    let title = '🎵 [성가대 연습실]';
     let text = '찬양곡 연습하러 오세요!';
 
-    // 현재 로그인 상태라면, 접속 정보를 포함한 '매직 링크' 생성
+    // 현재 로그인 상태라면 매직 링크 생성
     if (state.currentGroupId && state.currentChurchName && state.currentLoginPw) {
         const baseUrl = window.location.origin + window.location.pathname;
         const params = new URLSearchParams();
@@ -121,20 +119,28 @@ export async function inviteMember() {
         params.set('pw', state.currentLoginPw);
         
         shareUrl = `${baseUrl}?${params.toString()}`;
-        title = `[${state.currentChurchName} 성가대]`;
-        text = `들어와서 찬양곡을 확인하세요!`;
+        title = `🎵 [${state.currentChurchName} 성가대]`;
+        // ✨ 줄바꿈(\n)을 넣어 메시지를 예쁘게 만듭니다.
+        text = `성가대원 초대장이 도착했습니다!\n\n👇 아래 링크를 누르면 아이디/비번 입력 없이 자동으로 로그인됩니다.`;
     }
 
-    const shareData = { title: title, text: text, url: shareUrl };
+    const shareData = { 
+        title: title, 
+        text: text, 
+        url: shareUrl 
+    };
 
     if (navigator.share) { 
         try { await navigator.share(shareData); } 
-        catch (err) { if (err.name !== 'AbortError') copyToClipboard(shareUrl); } 
+        catch (err) { 
+            // 공유 취소 시 에러 무시, 그 외에는 복사
+            if (err.name !== 'AbortError') copyToClipboard(shareUrl); 
+        } 
     } else { 
         copyToClipboard(shareUrl); 
     }
 }
 
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => alert("초대 링크가 복사되었습니다!\n카톡이나 문자에 붙여넣기 하세요.")).catch(() => prompt("이 링크를 복사해서 공유하세요:", text));
+    navigator.clipboard.writeText(text).then(() => alert("초대 링크가 복사되었습니다!\n카톡 대화창에 '붙여넣기' 하세요.")).catch(() => prompt("이 링크를 복사해서 공유하세요:", text));
 }
