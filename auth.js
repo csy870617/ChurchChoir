@@ -4,7 +4,7 @@ import { state } from "./state.js";
 import { loadPosts } from "./board.js"; 
 import { loadShortcutLinks, syncLinksFromDB } from "./links.js";
 
-// ... (createGroup, boardLogin, boardLogout 함수는 기존과 동일하므로 생략하지 않고 전체 코드 드립니다) ...
+// ... (createGroup, boardLogin, boardLogout 기존 코드 유지 - 생략 없이 전체 코드 제공) ...
 
 export async function createGroup() {
     const name = document.getElementById('login-church').value.trim();
@@ -69,52 +69,46 @@ export function boardLogout() {
     window.history.replaceState({}, document.title, window.location.pathname);
 }
 
-// ✨ [수정됨] 카카오톡 공유하기 (구버전 방식 사용)
-export function inviteMember() {
-    try {
-        if (!Kakao.isInitialized()) {
-            Kakao.init('c3fad3332df7403992db3c02afd081fa'); 
-        }
+// ✨ [완전 변경] 모바일 표준 공유 (가장 안정적)
+export async function inviteMember() {
+    let shareUrl = 'https://csy870617.github.io/ChurchChoir/';
+    let title = '성가대 연습실';
+    let text = '찬양곡 연습하러 오세요!';
 
-        let shareUrl = 'https://csy870617.github.io/ChurchChoir/';
-        let title = '성가대 연습실';
-        let description = '찬양곡 연습하러 오세요!';
+    // 매직 링크 생성
+    if (state.currentGroupId && state.currentChurchName && state.currentLoginPw) {
+        const baseUrl = 'https://csy870617.github.io/ChurchChoir/';
+        const params = `?church=${encodeURIComponent(state.currentChurchName)}&pw=${encodeURIComponent(state.currentLoginPw)}`;
         
-        if (state.currentGroupId && state.currentChurchName && state.currentLoginPw) {
-            const baseUrl = 'https://csy870617.github.io/ChurchChoir/';
-            const params = `?church=${encodeURIComponent(state.currentChurchName)}&pw=${encodeURIComponent(state.currentLoginPw)}`;
-            
-            shareUrl = baseUrl + params;
-            title = `${state.currentChurchName} 성가대`;
-            description = '👇 버튼을 누르면 자동으로 로그인됩니다.';
-        }
-
-        // ✨ Kakao.Link.sendDefault 사용 (회색 화면 멈춤 해결)
-        Kakao.Link.sendDefault({
-            objectType: 'feed',
-            content: {
-                title: title,
-                description: description,
-                // 안전한 샘플 이미지로 테스트
-                imageUrl: 'https://k.kakaocdn.net/14/dn/btq831qcgZ/k87fHk0Kk9e97o9499p9k0/o.jpg',
-                link: {
-                    mobileWebUrl: shareUrl,
-                    webUrl: shareUrl,
-                },
-            },
-            buttons: [
-                {
-                    title: '입장하기',
-                    link: {
-                        mobileWebUrl: shareUrl,
-                        webUrl: shareUrl,
-                    },
-                },
-            ]
-        });
-
-    } catch (err) {
-        console.error("Kakao Share Error:", err);
-        alert("카카오톡 실행 중 오류가 발생했습니다.");
+        shareUrl = baseUrl + params;
+        title = `[${state.currentChurchName} 성가대]`;
+        text = `👇 링크를 누르면 자동으로 로그인됩니다.`;
     }
+
+    // 1. 모바일 '공유하기' 패널 열기 (카톡, 문자 등 선택 가능)
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: title,
+                text: text,
+                url: shareUrl,
+            });
+            console.log("공유 성공");
+        } catch (err) {
+            // 사용자가 공유 창을 닫거나 취소한 경우 (에러 아님)
+            if (err.name !== 'AbortError') {
+                console.log('공유 실패:', err);
+                copyToClipboard(shareUrl);
+            }
+        }
+    } else {
+        // 2. PC에서는 클립보드 복사
+        copyToClipboard(shareUrl);
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text)
+        .then(() => alert("초대 링크가 복사되었습니다!\n카톡이나 문자에 '붙여넣기' 하세요."))
+        .catch(() => prompt("이 링크를 복사해서 공유하세요:", text));
 }
