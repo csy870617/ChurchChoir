@@ -85,50 +85,57 @@ export function boardLogout() {
     window.history.replaceState({}, document.title, window.location.pathname);
 }
 
-// ✨ 카카오톡 공유하기 (키 적용됨)
+// ✨ 카카오톡 공유하기 (수정됨: 멈춤 현상 해결)
 export function inviteMember() {
-    // 1. 카카오 SDK 초기화
-    if (!Kakao.isInitialized()) {
-        // ✨ 목사님이 주신 키 적용 완료
-        Kakao.init('c3fad3332df7403992db3c02afd081fa'); 
-    }
+    try {
+        // 1. 카카오 SDK 초기화
+        if (!Kakao.isInitialized()) {
+            Kakao.init('c3fad3332df7403992db3c02afd081fa'); 
+        }
 
-    // 기본 링크 (로그인 전)
-    let shareUrl = 'https://csy870617.github.io/ChurchChoir/';
-    let title = '성가대 연습실';
-    let description = '찬양곡 연습하러 오세요!';
-    
-    // 2. 로그인 상태면 매직 링크 생성
-    if (state.currentGroupId && state.currentChurchName && state.currentLoginPw) {
-        const baseUrl = 'https://csy870617.github.io/ChurchChoir/';
-        // 한글이나 특수문자가 깨지지 않도록 인코딩 처리
-        const params = `?church=${encodeURIComponent(state.currentChurchName)}&pw=${encodeURIComponent(state.currentLoginPw)}`;
+        let shareUrl = 'https://csy870617.github.io/ChurchChoir/';
+        let title = '성가대 연습실';
+        let description = '찬양곡 연습하러 오세요!';
         
-        shareUrl = baseUrl + params;
-        title = `${state.currentChurchName} 성가대`;
-        description = '👇 버튼을 누르면 자동으로 로그인됩니다.';
-    }
+        if (state.currentGroupId && state.currentChurchName && state.currentLoginPw) {
+            const baseUrl = 'https://csy870617.github.io/ChurchChoir/';
+            const params = `?church=${encodeURIComponent(state.currentChurchName)}&pw=${encodeURIComponent(state.currentLoginPw)}`;
+            
+            shareUrl = baseUrl + params;
+            title = `${state.currentChurchName} 성가대`;
+            description = '👇 버튼을 누르면 자동으로 로그인됩니다.';
+        }
 
-    // 3. 카카오톡으로 전송
-    Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-            title: title,
-            description: description,
-            imageUrl: 'https://csy870617.github.io/ChurchChoir/ad/thumbnail2.png',
-            link: {
-                mobileWebUrl: shareUrl,
-                webUrl: shareUrl,
-            },
-        },
-        buttons: [
-            {
-                title: '입장하기', // 버튼 텍스트
+        // 3. 카카오톡으로 전송
+        Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+                title: title,
+                description: description,
+                imageUrl: 'https://csy870617.github.io/ChurchChoir/ad/thumbnail2.png',
                 link: {
                     mobileWebUrl: shareUrl,
                     webUrl: shareUrl,
                 },
             },
-        ],
-    });
+            buttons: [
+                {
+                    title: '입장하기',
+                    link: {
+                        mobileWebUrl: shareUrl,
+                        webUrl: shareUrl,
+                    },
+                },
+            ],
+            // 🚨 installTalk: true 삭제함 (이게 멈춤의 원인)
+        });
+
+    } catch (err) {
+        // 카톡 실행 실패 시, 안전하게 클립보드 복사로 대체
+        console.error("Kakao Share Error:", err);
+        const urlToCopy = 'https://csy870617.github.io/ChurchChoir/';
+        navigator.clipboard.writeText(urlToCopy).then(() => {
+            alert("카카오톡 실행에 실패하여 링크가 복사되었습니다.\n직접 붙여넣어주세요.");
+        });
+    }
 }
