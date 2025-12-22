@@ -9,33 +9,18 @@ export async function createGroup() {
     const name = document.getElementById('login-church').value.trim();
     const pw = document.getElementById('login-pw').value.trim();
     
-    if (!name || !pw) { 
-        alert("교회 이름과 비밀번호를 모두 입력한 후 버튼을 눌러주세요."); 
-        return; 
-    }
+    if (!name || !pw) { alert("교회 이름과 비밀번호를 모두 입력한 후 버튼을 눌러주세요."); return; }
 
     try {
         const q = query(groupsCollection, where("churchName", "==", name), where("password", "==", pw));
         const querySnapshot = await getDocs(q);
         
-        if (!querySnapshot.empty) { 
-            alert("이미 존재하는 그룹입니다. 다른 아이디나 비밀번호를 입력해주세요."); 
-            return; 
-        }
+        if (!querySnapshot.empty) { alert("이미 존재하는 그룹입니다. 다른 아이디나 비밀번호를 입력해주세요."); return; }
         
-        await addDoc(groupsCollection, { 
-            churchName: name, 
-            password: pw, 
-            createdAt: new Date().toISOString(),
-            shortcuts: {}, 
-            partLinks: {} 
-        });
+        await addDoc(groupsCollection, { churchName: name, password: pw, createdAt: new Date().toISOString(), shortcuts: {}, partLinks: {} });
         alert(`'${name}' 그룹이 생성되었습니다! 이제 [로그인] 버튼을 눌러 입장하세요.`);
         
-    } catch (e) { 
-        console.error(e);
-        alert("그룹 생성 중 오류가 발생했습니다."); 
-    }
+    } catch (e) { console.error(e); alert("그룹 생성 중 오류가 발생했습니다."); }
 }
 
 export async function boardLogin() {
@@ -44,9 +29,7 @@ export async function boardLogin() {
     const rememberMe = document.getElementById('remember-me').checked;
     const autoLogin = document.getElementById('auto-login').checked;
 
-    if (!inputName || !inputPw) { 
-        if (!rememberMe) { alert("정보를 입력해주세요."); return; }
-    }
+    if (!inputName || !inputPw) { if (!rememberMe) { alert("정보를 입력해주세요."); return; } }
 
     try {
         const q = query(groupsCollection, where("churchName", "==", inputName), where("password", "==", inputPw));
@@ -92,55 +75,60 @@ export async function boardLogin() {
 }
 
 export function boardLogout() {
-    state.currentGroupId = null; 
-    state.currentChurchName = null; 
-    state.currentLoginPw = null; 
+    state.currentGroupId = null; state.currentChurchName = null; state.currentLoginPw = null; 
     localStorage.removeItem('choir_auto_login');
     document.getElementById('auto-login').checked = false;
     document.getElementById('main-content-section').style.display = 'none';
     document.getElementById('login-section').style.display = 'block';
     const btnWrite = document.getElementById('btn-show-write');
     if(btnWrite) btnWrite.style.display = 'none';
-    
     window.history.replaceState({}, document.title, window.location.pathname);
 }
 
-// ✨ 초대 링크 공유 (디자인 개선)
-export async function inviteMember() {
+// ✨ 카카오톡 공유하기 (키 적용됨)
+export function inviteMember() {
+    // 1. 카카오 SDK 초기화
+    if (!Kakao.isInitialized()) {
+        // ✨ 목사님이 주신 키 적용 완료
+        Kakao.init('c3fad3332df7403992db3c02afd081fa'); 
+    }
+
+    // 기본 링크 (로그인 전)
     let shareUrl = 'https://csy870617.github.io/ChurchChoir/';
-    let title = '🎵 [성가대 연습실]';
-    let text = '찬양곡 연습하러 오세요!';
-
-    // 현재 로그인 상태라면 매직 링크 생성
+    let title = '성가대 연습실';
+    let description = '찬양곡 연습하러 오세요!';
+    
+    // 2. 로그인 상태면 매직 링크 생성
     if (state.currentGroupId && state.currentChurchName && state.currentLoginPw) {
-        const baseUrl = window.location.origin + window.location.pathname;
-        const params = new URLSearchParams();
-        params.set('church', state.currentChurchName);
-        params.set('pw', state.currentLoginPw);
+        const baseUrl = 'https://csy870617.github.io/ChurchChoir/';
+        // 한글이나 특수문자가 깨지지 않도록 인코딩 처리
+        const params = `?church=${encodeURIComponent(state.currentChurchName)}&pw=${encodeURIComponent(state.currentLoginPw)}`;
         
-        shareUrl = `${baseUrl}?${params.toString()}`;
-        title = `🎵 [${state.currentChurchName} 성가대]`;
-        // ✨ 줄바꿈(\n)을 넣어 메시지를 예쁘게 만듭니다.
-        text = `성가대원 초대장이 도착했습니다!\n\n👇 아래 링크를 누르면 아이디/비번 입력 없이 자동으로 로그인됩니다.`;
+        shareUrl = baseUrl + params;
+        title = `${state.currentChurchName} 성가대`;
+        description = '👇 버튼을 누르면 자동으로 로그인됩니다.';
     }
 
-    const shareData = { 
-        title: title, 
-        text: text, 
-        url: shareUrl 
-    };
-
-    if (navigator.share) { 
-        try { await navigator.share(shareData); } 
-        catch (err) { 
-            // 공유 취소 시 에러 무시, 그 외에는 복사
-            if (err.name !== 'AbortError') copyToClipboard(shareUrl); 
-        } 
-    } else { 
-        copyToClipboard(shareUrl); 
-    }
-}
-
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => alert("초대 링크가 복사되었습니다!\n카톡 대화창에 '붙여넣기' 하세요.")).catch(() => prompt("이 링크를 복사해서 공유하세요:", text));
+    // 3. 카카오톡으로 전송
+    Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+            title: title,
+            description: description,
+            imageUrl: 'https://csy870617.github.io/ChurchChoir/ad/thumbnail2.png',
+            link: {
+                mobileWebUrl: shareUrl,
+                webUrl: shareUrl,
+            },
+        },
+        buttons: [
+            {
+                title: '입장하기', // 버튼 텍스트
+                link: {
+                    mobileWebUrl: shareUrl,
+                    webUrl: shareUrl,
+                },
+            },
+        ],
+    });
 }
