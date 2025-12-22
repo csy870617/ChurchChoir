@@ -1,4 +1,13 @@
 /* CSS Reset & Global */
+/* ✨ 스크롤바 숨기기 (기능은 유지됨) */
+::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+body {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
 body {
     font-family: 'Noto Sans KR', sans-serif;
     background: #f4f6f9;
@@ -241,7 +250,7 @@ textarea.input-full { height: 150px; resize: vertical; line-height: 1.6; }
 .btn-report-error:hover { background-color: #fff5f5; transform: translateY(-2px); }
 .share-hint { font-size: 0.8em; color: #888; margin-top: 8px; text-align: center; }
 
-/* ✨ 광고 배너 스타일 */
+/* 광고 배너 스타일 */
 .ad-banner-wrapper {
     margin-top: 30px;
     margin-bottom: 10px;
