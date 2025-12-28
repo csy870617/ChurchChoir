@@ -340,31 +340,35 @@ footer a { color: #999; text-decoration: none; }
 .btn-search-slot { background-color: var(--primary-color); color: white; border: none; }
 .btn-delete-slot { background-color: #fff; color: var(--danger-red); border: 1px solid var(--danger-red); }
 
-/* ✨ [NEW] 순서 변경 화살표 버튼 스타일 */
 .move-btn-group {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 2px;
-    margin-right: 8px;
+    gap: 4px; /* 간격 조금 넓힘 */
+    margin-right: 12px; /* 오른쪽 여백 늘림 */
 }
 .btn-move {
     background: #fff;
     border: 1px solid #ddd;
-    border-radius: 4px;
-    width: 24px;
-    height: 24px;
-    font-size: 0.7em;
-    color: #888;
+    border-radius: 6px;
+    width: 32px; /* 모바일에서 누르기 편하게 크기 키움 (24px -> 32px) */
+    height: 32px;
+    font-size: 0.9em; /* 화살표 글자도 키움 */
+    color: #666;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     transition: 0.2s;
+    touch-action: manipulation; /* 터치 반응 속도 개선 */
 }
 .btn-move:hover {
     background-color: #f1f3f5;
     color: #333;
     border-color: #bbb;
+}
+.btn-move:active {
+    background-color: #e2e8f0;
+    transform: scale(0.95); /* 눌렀을 때 살짝 작아지는 효과 */
 }

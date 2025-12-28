@@ -13,13 +13,12 @@
     <meta property="og:image" content="https://csy870617.github.io/ChurchChoir/ad/thumbnail2.png">
 
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
     
-    <script src="concise_data.js"></script>
-    <script type="module" src="main.js"></script>
+    <script src="concise_data.js?v=2"></script>
+    <script type="module" src="main.js?v=2"></script>
 </head>
 <body>
-
     <div class="container">
         <header>
             <h1>성가대 연습실 🎶</h1>
@@ -285,6 +284,13 @@
             <div style="text-align: center; margin-top: 25px;">
                 <button type="button" onclick="closePlayModal()" class="btn-small btn-cancel" style="padding: 10px 30px;">닫기</button>
             </div>
+        </div>
+    </div>
+
+    <div id="selection-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3>🔍 중복 곡 선택</h3>
+            <div id="modal-options-list" class="modal-options"></div>
         </div>
     </div>
 
