@@ -23,6 +23,44 @@ export function syncLinksFromDB(groupData) {
     loadPartLinks();
 }
 
+// ✨ [NEW] 순서 변경 (Swap Logic)
+export async function moveItem(type, currentSlot, direction) {
+    if (!state.currentGroupId) return;
+
+    const offset = direction === 'up' ? -1 : 1;
+    const targetSlot = currentSlot + offset;
+
+    if (targetSlot < 1 || targetSlot > 3) return;
+
+    // 로컬 데이터 스왑
+    const dbMap = (type === 'shortcut') ? dbShortcuts : dbPartLinks;
+    
+    // 데이터 스왑
+    const temp = dbMap[currentSlot];
+    dbMap[currentSlot] = dbMap[targetSlot];
+    dbMap[targetSlot] = temp;
+
+    // Firestore 업데이트 준비
+    const groupRef = doc(db, "choir_groups", state.currentGroupId);
+    const updateData = {};
+    const fieldPrefix = (type === 'shortcut') ? 'shortcuts' : 'partLinks';
+    
+    // undefined일 경우 null로 저장하여 삭제 처리
+    updateData[`${fieldPrefix}.${currentSlot}`] = dbMap[currentSlot] || null;
+    updateData[`${fieldPrefix}.${targetSlot}`] = dbMap[targetSlot] || null;
+    
+    await updateDoc(groupRef, updateData);
+    
+    // UI 업데이트
+    if (type === 'shortcut') {
+        refreshShortcutManager();
+        loadShortcutLinks();
+    } else {
+        refreshPartManager();
+        loadPartLinks();
+    }
+}
+
 // --- 찬양곡 슬롯 관리 (Manager) ---
 export function openPartManager() {
     refreshPartManager();
@@ -291,10 +329,13 @@ export function applySharedData(key) { const data = state.searchResultsCache[key
 export async function sharePartLink() { if (state.currentPart !== 'all') { alert("전체 설정 모드에서만 공유할 수 있습니다."); return; } const title = document.getElementById('part-link-title').value.trim(); const bookTitle = document.getElementById('part-link-book').value.trim(); const urlAll = document.getElementById('part-link-url').value.trim(); if (!title || !bookTitle || !urlAll) { alert("제목, 책 제목, 합창 링크는 필수입니다."); return; } if (!isValidYoutubeUrl(urlAll)) { alert("합창 링크가 유튜브 주소가 아닙니다."); return; } const sharedUrls = { all: urlAll }; let missing = false; let invalid = false; ['sop', 'alt', 'ten', 'bas'].forEach(p => { const val = document.getElementById(`part-link-url-${p}`).value.trim(); if (!val) missing = true; else if (!isValidYoutubeUrl(val)) invalid = true; sharedUrls[p] = val; }); if (missing) { alert("모든 파트의 링크를 채워야 공유할 수 있습니다."); return; } if (invalid) { alert("모든 링크는 유튜브 주소여야 합니다."); return; } if (!confirm("이 데이터를 다른 교회와 공유하시겠습니까?\n(정확한 정보만 공유해주세요)")) return; const searchTitle = title.replace(/\s+/g, '').toLowerCase(); try { const q = query(sharedLinksCollection, where("searchTitle", "==", searchTitle), where("bookTitle", "==", bookTitle)); const querySnapshot = await getDocs(q); const dataToSave = { title: title, searchTitle: searchTitle, bookTitle: bookTitle, urls: sharedUrls, updatedAt: new Date().toISOString() }; if (!querySnapshot.empty) { const docId = querySnapshot.docs[0].id; await updateDoc(doc(db, "shared_links", docId), dataToSave); } else { dataToSave.reportCount = 0; await addDoc(sharedLinksCollection, dataToSave); } alert("성공적으로 공유되었습니다! 감사합니다."); } catch (e) { console.error(e); alert("공유 중 오류가 발생했습니다."); } }
 export async function reportSharedLink(docId) { const reportedList = JSON.parse(localStorage.getItem('choir_reported_links') || '[]'); if (reportedList.includes(docId)) { alert("이미 신고한 콘텐츠입니다."); return; } if(!confirm("이 콘텐츠를 신고하시겠습니까?\n부적절한 콘텐츠나 잘못된 링크인 경우 신고해주세요.\n(누적 3회 시 자동 삭제됩니다)")) return; try { const docRef = doc(db, "shared_links", docId); const docSnap = await getDoc(docRef); if (docSnap.exists()) { const data = docSnap.data(); const currentReports = (data.reportCount || 0) + 1; if (currentReports >= 3) { await deleteDoc(docRef); alert("신고가 누적되어 해당 데이터가 삭제되었습니다."); document.getElementById('shared-search-msg').innerHTML = "삭제되었습니다. 다시 검색해주세요."; } else { await updateDoc(docRef, { reportCount: currentReports }); alert("신고가 접수되었습니다. (현재 누적: " + currentReports + "회)"); reportedList.push(docId); localStorage.setItem('choir_reported_links', JSON.stringify(reportedList)); } } else { alert("이미 삭제된 데이터입니다."); } } catch (e) { console.error(e); alert("신고 처리 중 오류가 발생했습니다."); } }
 
-// --- 9. 오류 신고 메일 (수정됨) ---
+// --- 9. 오류 신고 메일 ---
 export function sendErrorReport() {
     const email = "faiths3927@gmail.com";
     const subject = "[성가대 연습실] 오류 신고";
     const body = "오류 내용을 적어주세요:\n\n";
     window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
+
+// ✨ [중요] HTML onclick에서 함수를 호출할 수 있도록 window에 등록
+window.moveItem = moveItem;
