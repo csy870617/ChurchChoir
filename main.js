@@ -3,12 +3,12 @@ import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/fir
 import { auth } from "./config.js";
 import { createGroup, boardLogin, boardLogout, inviteMember } from "./auth.js";
 import { showWriteForm, showBoardList, savePost, tryDeletePost, tryEditPost, loadPosts } from "./board.js";
-import { 
-    loadShortcutLinks, openShortcutLink, openShortcutManager, configureShortcut, clearShortcut, removeLink, searchAndSetLink, 
-    openDirectLink, loadPartLinks, openPartLinkModal, searchGroupLinks, searchSharedLinks, applySharedData, reportSharedLink, 
-    savePartLink, sharePartLink, removePartLink, handleLinkClick, refreshShortcutManager, 
-    closePartLinkModal, closeShortcutManager, closeLinkActionModal, openPlayModal, closePlayModal, 
-    openPartManager, closePartManager, configurePart, clearPart, sendErrorReport, syncLinksFromDB 
+import {
+    loadShortcutLinks, openShortcutLink, openShortcutManager, configureShortcut, clearShortcut, removeLink, searchAndSetLink,
+    openDirectLink, loadPartLinks, openPartLinkModal, searchGroupLinks, searchSharedLinks, applySharedData, reportSharedLink,
+    savePartLink, sharePartLink, removePartLink, refreshShortcutManager,
+    closePartLinkModal, closeShortcutManager, closeLinkActionModal, openPlayModal, closePlayModal,
+    openPartManager, closePartManager, configurePart, clearPart, sendErrorReport, syncLinksFromDB
 } from "./links.js"; 
 import { searchAndRedirect } from "./search.js";
 
@@ -40,7 +40,6 @@ window.reportSharedLink = reportSharedLink;
 window.savePartLink = savePartLink;
 window.sharePartLink = sharePartLink;
 window.removePartLink = removePartLink;
-window.handleLinkClick = handleLinkClick;
 window.searchAndRedirect = searchAndRedirect;
 window.loadMorePosts = () => loadPosts(true);
 
