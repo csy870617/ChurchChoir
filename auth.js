@@ -36,7 +36,12 @@ export async function boardLogin() {
     const inputPw = document.getElementById('login-pw').value.trim();
     const rememberMe = document.getElementById('remember-me').checked;
     const autoLogin = document.getElementById('auto-login').checked;
-    if (!inputName || !inputPw) { if (!rememberMe) { alert("정보를 입력해주세요."); return; } }
+    // 빈 입력이면 항상 중단 (기존에는 '저장' 체크 시 빈 값으로 DB 조회가 진행되는 버그가 있었음)
+    if (!inputName || !inputPw) {
+        if (!rememberMe && !window.isMagicLogin) alert("정보를 입력해주세요.");
+        window.isMagicLogin = false;
+        return;
+    }
 
     try {
         const hashedPw = await hashPassword(inputPw);
@@ -113,7 +118,13 @@ export async function boardLogin() {
         const boardModule = await import("./board.js");
         boardModule.loadPosts();
         syncLinksFromDB(groupData);
-    } catch (e) { console.error(e); alert("로그인 중 오류가 발생했습니다."); }
+    } catch (e) {
+        console.error(e);
+        alert("로그인 중 오류가 발생했습니다.");
+    } finally {
+        // 플래그를 남겨두면 이후 수동 로그인에서 '저장/자동 로그인'이 동작하지 않음
+        window.isMagicLogin = false;
+    }
 }
 
 export function boardLogout() {
@@ -155,6 +166,11 @@ export async function inviteMember() {
 }
 
 function copyToClipboard(text) {
+    // 비보안 컨텍스트/구형 브라우저에서는 navigator.clipboard 자체가 없어 TypeError 발생
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+        prompt("이 링크를 복사해서 공유하세요:", text);
+        return;
+    }
     navigator.clipboard.writeText(text)
         .then(() => alert("초대 링크가 복사되었습니다!\n카톡이나 문자에 '붙여넣기' 하세요."))
         .catch(() => prompt("이 링크를 복사해서 공유하세요:", text));

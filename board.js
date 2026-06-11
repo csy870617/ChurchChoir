@@ -177,7 +177,7 @@ export async function savePost() {
             alert("등록되었습니다.");
         }
         showBoardList();
-    } catch (e) { alert("저장 중 오류가 발생했습니다."); }
+    } catch (e) { console.error(e); alert("저장 중 오류가 발생했습니다."); }
 }
 
 export async function tryDeletePost(id) {

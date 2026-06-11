@@ -78,8 +78,7 @@ export function showSelectionPopup(matches, isSetupMode) {
 function selectAndSetLink(match) {
     saveLinkToStorage(state.currentLinkSlot, match);
     alert(`'${match.title}' 곡이 즐겨찾기 ${state.currentLinkSlot}에 설정되었습니다.`);
-    closeModalWithHistory();
-    closeModalWithHistory(); // 검색모달 + 설정모달 닫기
+    closeModalWithHistory(); // 모든 모달이 한 번에 닫힘 (saveLinkToStorage 내부 호출은 중복 실행되지 않음)
     refreshShortcutManager();
     loadShortcutLinks();
 }

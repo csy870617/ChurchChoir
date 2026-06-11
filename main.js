@@ -1,4 +1,5 @@
-import { escapeInAppBrowser, toggleBoard, toggleIntegrated, openModalWithHistory, closeModalWithHistory } from "./utils.js";
+import { toggleBoard, toggleIntegrated, closeModalWithHistory } from "./utils.js";
+import { state } from "./state.js";
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { auth } from "./config.js";
 import { createGroup, boardLogin, boardLogout, inviteMember } from "./auth.js";
@@ -95,27 +96,39 @@ function checkAndLogin() {
         document.getElementById('login-pw').value = linkPw;
         
         window.isMagicLogin = true; // 경고창 방지 플래그
-        
+
         // 자동 로그인 시도
         boardLogin().then(() => {
-            // 성공 시 주소창 깔끔하게 정리
-            window.history.replaceState({}, document.title, window.location.pathname);
+            if (state.currentGroupId) {
+                // 성공 시에만 주소창 정리 (실패 시 파라미터를 남겨 재시도 가능)
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                alert("초대 링크 로그인에 실패했습니다.\n링크가 만료되었거나 비밀번호가 변경되었을 수 있습니다.");
+            }
         });
-        
+
     } else {
         // 2. 기존 저장된 정보 확인 (일반 접속)
-        const remembered = localStorage.getItem('choir_remembered');
-        if (remembered) {
-            const { name, pw } = JSON.parse(remembered);
-            document.getElementById('login-church').value = name;
-            document.getElementById('login-pw').value = pw;
-            document.getElementById('remember-me').checked = true;
+        let savedLogin = null;
+        try {
+            const remembered = localStorage.getItem('choir_remembered');
+            if (remembered) savedLogin = JSON.parse(remembered);
+        } catch (e) {
+            // 손상된 저장 정보는 초기화 (JSON.parse 실패로 앱 초기화가 중단되는 것 방지)
+            console.error("저장된 로그인 정보가 손상되어 초기화합니다.", e);
+            localStorage.removeItem('choir_remembered');
+            localStorage.removeItem('choir_auto_login');
         }
 
-        const isAutoLogin = localStorage.getItem('choir_auto_login');
-        if (isAutoLogin === 'true' && remembered) {
-            document.getElementById('auto-login').checked = true;
-            boardLogin(); 
+        if (savedLogin && typeof savedLogin.name === 'string' && typeof savedLogin.pw === 'string') {
+            document.getElementById('login-church').value = savedLogin.name;
+            document.getElementById('login-pw').value = savedLogin.pw;
+            document.getElementById('remember-me').checked = true;
+
+            if (localStorage.getItem('choir_auto_login') === 'true') {
+                document.getElementById('auto-login').checked = true;
+                boardLogin();
+            }
         }
     }
 }

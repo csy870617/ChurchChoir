@@ -28,11 +28,17 @@ export async function hashPassword(password) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// 유튜브 URL 검사
+// 유튜브 URL 검사 (m.youtube.com, music.youtube.com 등 서브도메인 허용)
 export function isValidYoutubeUrl(url) {
     if (!url) return false;
-    const regex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+    const regex = /^(https?:\/\/)?([a-z0-9-]+\.)*(youtube\.com|youtu\.be)\/.+$/i;
     return regex.test(url);
+}
+
+// 프로토콜 없는 주소 보정 (window.open이 상대경로로 열리는 문제 방지)
+export function normalizeUrl(url) {
+    if (!url) return url;
+    return /^https?:\/\//i.test(url) ? url : 'https://' + url;
 }
 
 // 링크 텍스트 변환 (XSS 방지: 텍스트는 이스케이프, URL만 링크로 변환)
@@ -62,32 +68,47 @@ export function convertUrlsToLinks(text) {
     return parts.join('');
 }
 
-// 클립보드 복사
+// 클립보드 복사 (Clipboard API 미지원 환경 대비)
 export function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => { alert("링크가 복사되었습니다."); }).catch(err => { alert("복사 실패"); });
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+        prompt("이 링크를 복사해서 공유하세요:", text);
+        return;
+    }
+    navigator.clipboard.writeText(text).then(() => { alert("링크가 복사되었습니다."); }).catch(() => { prompt("이 링크를 복사해서 공유하세요:", text); });
 }
+
+// 모달용 히스토리 항목은 항상 1개만 유지 (중첩 모달 + 연속 닫기 시 뒤로가기 중복 방지)
+let modalStatePushed = false;
 
 // 팝업 열기 (히스토리 추가)
 export function openModalWithHistory(modalId) {
     const el = document.getElementById(modalId);
     if (el) {
         el.style.display = 'flex';
-        history.pushState({ modal: modalId }, null, null);
+        if (modalStatePushed) {
+            history.replaceState({ modal: modalId }, '');
+        } else {
+            history.pushState({ modal: modalId }, '');
+            modalStatePushed = true;
+        }
     }
 }
 
-// 팝업 닫기 (안전장치 추가)
+// 팝업 닫기 (여러 번 호출되어도 history.back은 최대 1회만 실행)
 export function closeModalWithHistory() {
-    if (history.state && history.state.modal) {
-        history.back();
-    } else {
-        const modals = document.querySelectorAll('.modal-overlay');
-        modals.forEach(el => el.style.display = 'none');
+    const modals = document.querySelectorAll('.modal-overlay');
+    modals.forEach(el => el.style.display = 'none');
+    if (modalStatePushed) {
+        modalStatePushed = false;
+        if (history.state && history.state.modal) {
+            history.back();
+        }
     }
 }
 
 // 뒤로가기 이벤트 감지 (물리 버튼 대응)
 window.addEventListener('popstate', () => {
+    modalStatePushed = false;
     const modals = document.querySelectorAll('.modal-overlay');
     modals.forEach(el => el.style.display = 'none');
 });

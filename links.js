@@ -1,7 +1,7 @@
 import { getDocs, addDoc, deleteDoc, updateDoc, doc, getDoc, query, where, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { db, sharedLinksCollection, groupLinksCollection, groupsCollection } from "./config.js";
 import { state, partNames } from "./state.js";
-import { isValidYoutubeUrl, openModalWithHistory, closeModalWithHistory, hashPassword } from "./utils.js";
+import { isValidYoutubeUrl, normalizeUrl, openModalWithHistory, closeModalWithHistory, hashPassword } from "./utils.js";
 import { performSearch, showSelectionPopup } from "./search.js";
 
 const REPORT_THRESHOLD = 3;
@@ -93,8 +93,13 @@ export async function clearPart(slot) {
     if (confirm(`링크 ${slot}번을 삭제하시겠습니까?`)) {
         delete dbPartLinks[slot];
         if (state.currentGroupId) {
-            const groupRef = doc(groupsCollection, state.currentGroupId);
-            await updateDoc(groupRef, { [`partLinks.${slot}`]: null });
+            try {
+                const groupRef = doc(groupsCollection, state.currentGroupId);
+                await updateDoc(groupRef, { [`partLinks.${slot}`]: null });
+            } catch (e) {
+                console.error(e);
+                alert("삭제 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
+            }
         }
         refreshPartManager();
         loadPartLinks();
@@ -197,7 +202,8 @@ export function openPartLinkModal(part) {
 
 export async function savePartLink() {
     const slot = state.currentPartSlot;
-    const mainUrl = document.getElementById('part-link-url').value.trim();
+    // 프로토콜이 없으면 https:// 를 붙여 저장 (없으면 window.open이 상대경로로 열려 404 발생)
+    const mainUrl = normalizeUrl(document.getElementById('part-link-url').value.trim());
 
     if (state.currentPart === 'all') {
         const title = document.getElementById('part-link-title').value.trim();
@@ -215,7 +221,7 @@ export async function savePartLink() {
         parts.forEach(p => {
             const inputEl = document.getElementById(`part-link-url-${p}`);
             if (inputEl) {
-                const url = inputEl.value.trim();
+                const url = normalizeUrl(inputEl.value.trim());
                 if (url) {
                     dbPartLinks[slot][p] = { url, title };
                     sharedUrls[p] = url;
@@ -224,8 +230,14 @@ export async function savePartLink() {
         });
 
         if (state.currentGroupId) {
-            const groupRef = doc(groupsCollection, state.currentGroupId);
-            await updateDoc(groupRef, { [`partLinks.${slot}`]: dbPartLinks[slot] });
+            try {
+                const groupRef = doc(groupsCollection, state.currentGroupId);
+                await updateDoc(groupRef, { [`partLinks.${slot}`]: dbPartLinks[slot] });
+            } catch (e) {
+                console.error(e);
+                alert("저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
+                return;
+            }
 
             try {
                 const searchTitle = title.replace(/\s+/g, '').toLowerCase();
@@ -265,8 +277,14 @@ export async function savePartLink() {
     dbPartLinks[slot][state.currentPart] = { url: mainUrl, title: currentTitle };
 
     if (state.currentGroupId) {
-        const groupRef = doc(groupsCollection, state.currentGroupId);
-        await updateDoc(groupRef, { [`partLinks.${slot}.${state.currentPart}`]: dbPartLinks[slot][state.currentPart] });
+        try {
+            const groupRef = doc(groupsCollection, state.currentGroupId);
+            await updateDoc(groupRef, { [`partLinks.${slot}.${state.currentPart}`]: dbPartLinks[slot][state.currentPart] });
+        } catch (e) {
+            console.error(e);
+            alert("저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
+            return;
+        }
     }
 
     loadPartLinks();
@@ -282,25 +300,30 @@ export async function removePartLink() {
     if (hashedInput !== state.currentLoginPw) { alert("비밀번호가 일치하지 않습니다."); return; }
 
     const slot = state.currentPartSlot;
-    if (state.currentPart === 'all') {
-        delete dbPartLinks[slot];
-        if (state.currentGroupId) {
-            const groupRef = doc(groupsCollection, state.currentGroupId);
-            await updateDoc(groupRef, { [`partLinks.${slot}`]: null });
+    try {
+        if (state.currentPart === 'all') {
+            delete dbPartLinks[slot];
+            if (state.currentGroupId) {
+                const groupRef = doc(groupsCollection, state.currentGroupId);
+                await updateDoc(groupRef, { [`partLinks.${slot}`]: null });
+            }
+            document.getElementById('part-link-url').value = '';
+            document.getElementById('part-link-title').value = '';
+            document.getElementById('part-link-book').value = '';
+            ['sop', 'alt', 'ten', 'bas'].forEach(p => {
+                const el = document.getElementById(`part-link-url-${p}`);
+                if (el) el.value = '';
+            });
+        } else {
+            if (dbPartLinks[slot]) delete dbPartLinks[slot][state.currentPart];
+            if (state.currentGroupId) {
+                const groupRef = doc(groupsCollection, state.currentGroupId);
+                await updateDoc(groupRef, { [`partLinks.${slot}.${state.currentPart}`]: null });
+            }
         }
-        document.getElementById('part-link-url').value = '';
-        document.getElementById('part-link-title').value = '';
-        document.getElementById('part-link-book').value = '';
-        ['sop', 'alt', 'ten', 'bas'].forEach(p => {
-            const el = document.getElementById(`part-link-url-${p}`);
-            if (el) el.value = '';
-        });
-    } else {
-        if (dbPartLinks[slot]) delete dbPartLinks[slot][state.currentPart];
-        if (state.currentGroupId) {
-            const groupRef = doc(groupsCollection, state.currentGroupId);
-            await updateDoc(groupRef, { [`partLinks.${slot}.${state.currentPart}`]: null });
-        }
+    } catch (e) {
+        console.error(e);
+        alert("삭제 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
     }
     loadPartLinks();
     refreshPartManager();
@@ -386,8 +409,13 @@ export async function saveLinkToStorage(slot, match) {
     const data = { title: match.title, url: match.url, collectionName: match.collectionName };
     dbShortcuts[slot] = data;
     if (state.currentGroupId) {
-        const groupRef = doc(groupsCollection, state.currentGroupId);
-        await updateDoc(groupRef, { [`shortcuts.${slot}`]: data });
+        try {
+            const groupRef = doc(groupsCollection, state.currentGroupId);
+            await updateDoc(groupRef, { [`shortcuts.${slot}`]: data });
+        } catch (e) {
+            console.error(e);
+            alert("즐겨찾기 저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
+        }
     }
     refreshShortcutManager();
     loadShortcutLinks();
@@ -399,8 +427,13 @@ export async function removeLink() {
     if (confirm(`정말 즐겨찾기 ${state.currentLinkSlot}을(를) 해제하시겠습니까?`)) {
         delete dbShortcuts[state.currentLinkSlot];
         if (state.currentGroupId) {
-            const groupRef = doc(groupsCollection, state.currentGroupId);
-            await updateDoc(groupRef, { [`shortcuts.${state.currentLinkSlot}`]: null });
+            try {
+                const groupRef = doc(groupsCollection, state.currentGroupId);
+                await updateDoc(groupRef, { [`shortcuts.${state.currentLinkSlot}`]: null });
+            } catch (e) {
+                console.error(e);
+                alert("해제 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
+            }
         }
         updateLinkButton(state.currentLinkSlot, null);
         refreshShortcutManager();
@@ -428,8 +461,13 @@ export async function clearShortcut(slot) {
     if (confirm(`즐겨찾기 ${slot}번을 삭제하시겠습니까?`)) {
         delete dbShortcuts[slot];
         if (state.currentGroupId) {
-            const groupRef = doc(groupsCollection, state.currentGroupId);
-            await updateDoc(groupRef, { [`shortcuts.${slot}`]: null });
+            try {
+                const groupRef = doc(groupsCollection, state.currentGroupId);
+                await updateDoc(groupRef, { [`shortcuts.${slot}`]: null });
+            } catch (e) {
+                console.error(e);
+                alert("삭제 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
+            }
         }
         refreshShortcutManager();
         loadShortcutLinks();
@@ -579,12 +617,13 @@ export function applySharedData(key) {
     const data = state.searchResultsCache[key];
     if (!data) return;
 
-    document.getElementById('part-link-title').value = data.title;
+    const urls = data.urls || {}; // urls 필드가 없는 데이터로 인한 TypeError 방지
+    document.getElementById('part-link-title').value = data.title || '';
     document.getElementById('part-link-book').value = data.bookTitle || '';
-    document.getElementById('part-link-url').value = data.urls.all || '';
+    document.getElementById('part-link-url').value = urls.all || '';
     ['sop', 'alt', 'ten', 'bas'].forEach(p => {
         const el = document.getElementById(`part-link-url-${p}`);
-        if (el) el.value = data.urls[p] || '';
+        if (el) el.value = urls[p] || '';
     });
 
     const successHtml = `<div style="color:var(--primary-color); font-weight:bold; margin-top:10px;">✅ 데이터가 적용되었습니다.<br>아래 [저장] 버튼을 꼭 눌러주세요.</div>`;
@@ -602,7 +641,7 @@ export async function sharePartLink() {
 
     const title = document.getElementById('part-link-title').value.trim();
     const bookTitle = document.getElementById('part-link-book').value.trim();
-    const urlAll = document.getElementById('part-link-url').value.trim();
+    const urlAll = normalizeUrl(document.getElementById('part-link-url').value.trim());
 
     if (!title || !bookTitle || !urlAll) {
         alert("제목, 책 제목, 합창 링크는 필수입니다.");
@@ -617,7 +656,7 @@ export async function sharePartLink() {
     let missing = false;
     let invalid = false;
     ['sop', 'alt', 'ten', 'bas'].forEach(p => {
-        const val = document.getElementById(`part-link-url-${p}`).value.trim();
+        const val = normalizeUrl(document.getElementById(`part-link-url-${p}`).value.trim());
         if (!val) missing = true;
         else if (!isValidYoutubeUrl(val)) invalid = true;
         sharedUrls[p] = val;
