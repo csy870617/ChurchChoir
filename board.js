@@ -160,20 +160,20 @@ export async function savePost() {
     if (content.length > MAX_CONTENT_LENGTH) { alert(`내용은 ${MAX_CONTENT_LENGTH}자 이하로 입력해주세요.`); return; }
 
     try {
-        const postData = {
-            groupId: state.currentGroupId,
-            churchName: state.currentChurchName,
-            title,
-            content,
-            author,
-            date: new Date().toISOString()
-        };
-
         if (id) {
-            await updateDoc(doc(db, "choir_posts", id), postData);
+            // 수정 시에는 작성일(date)·groupId·churchName을 덮어쓰지 않고 내용만 갱신
+            // (오타 수정만 해도 글이 목록 맨 위로 점프하고 날짜가 바뀌던 문제 방지)
+            await updateDoc(doc(db, "choir_posts", id), { title, content, author });
             alert("수정되었습니다.");
         } else {
-            await addDoc(boardCollection, postData);
+            await addDoc(boardCollection, {
+                groupId: state.currentGroupId,
+                churchName: state.currentChurchName,
+                title,
+                content,
+                author,
+                date: new Date().toISOString()
+            });
             alert("등록되었습니다.");
         }
         showBoardList();
