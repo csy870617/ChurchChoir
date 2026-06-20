@@ -1,4 +1,4 @@
-import { getDocs, addDoc, deleteDoc, updateDoc, doc, getDoc, query, where, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDocs, addDoc, deleteDoc, updateDoc, doc, getDoc, query, where, limit, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { db, sharedLinksCollection, groupLinksCollection, groupsCollection } from "./config.js";
 import { state, partNames } from "./state.js";
 import { isValidYoutubeUrl, normalizeUrl, openModalWithHistory, closeModalWithHistory, hashPassword } from "./utils.js";
@@ -37,17 +37,22 @@ export async function moveItem(type, currentSlot, direction) {
     try {
         const dbMap = (type === 'shortcut') ? dbShortcuts : dbPartLinks;
 
-        const temp = dbMap[currentSlot];
-        dbMap[currentSlot] = dbMap[targetSlot];
-        dbMap[targetSlot] = temp;
+        // 스왑 결과를 미리 계산만 하고, DB 쓰기에 성공한 뒤에 로컬/화면에 반영
+        // (DB 쓰기 실패 시 화면 순서와 DB가 어긋나던 문제 방지)
+        const newCurrent = dbMap[targetSlot] || null;
+        const newTarget = dbMap[currentSlot] || null;
 
         const groupRef = doc(groupsCollection, state.currentGroupId);
         const fieldPrefix = (type === 'shortcut') ? 'shortcuts' : 'partLinks';
         const updateData = {
-            [`${fieldPrefix}.${currentSlot}`]: dbMap[currentSlot] || null,
-            [`${fieldPrefix}.${targetSlot}`]: dbMap[targetSlot] || null,
+            [`${fieldPrefix}.${currentSlot}`]: newCurrent,
+            [`${fieldPrefix}.${targetSlot}`]: newTarget,
         };
         await updateDoc(groupRef, updateData);
+
+        // DB 반영 성공 후에만 로컬 상태 갱신
+        if (newCurrent === null) delete dbMap[currentSlot]; else dbMap[currentSlot] = newCurrent;
+        if (newTarget === null) delete dbMap[targetSlot]; else dbMap[targetSlot] = newTarget;
 
         if (type === 'shortcut') {
             refreshShortcutManager();
@@ -699,22 +704,28 @@ export async function reportSharedLink(docId) {
 
     try {
         const docRef = doc(db, "shared_links", docId);
-        const docSnap = await getDoc(docRef);
-        if (!docSnap.exists()) {
+
+        // 동시 신고 시 카운트가 덮어써져 임계치 도달이 늦어지던 문제 방지: 트랜잭션으로 원자적 처리
+        const result = await runTransaction(db, async (transaction) => {
+            const docSnap = await transaction.get(docRef);
+            if (!docSnap.exists()) return { status: 'gone' };
+
+            const currentReports = (docSnap.data().reportCount || 0) + 1;
+            if (currentReports >= REPORT_THRESHOLD) {
+                transaction.delete(docRef);
+                return { status: 'deleted' };
+            }
+            transaction.update(docRef, { reportCount: currentReports });
+            return { status: 'reported', count: currentReports };
+        });
+
+        if (result.status === 'gone') {
             alert("이미 삭제된 데이터입니다.");
-            return;
-        }
-
-        const data = docSnap.data();
-        const currentReports = (data.reportCount || 0) + 1;
-
-        if (currentReports >= REPORT_THRESHOLD) {
-            await deleteDoc(docRef);
+        } else if (result.status === 'deleted') {
             alert("신고가 누적되어 해당 데이터가 삭제되었습니다.");
             document.getElementById('shared-search-msg').innerHTML = "삭제되었습니다. 다시 검색해주세요.";
         } else {
-            await updateDoc(docRef, { reportCount: currentReports });
-            alert(`신고가 접수되었습니다. (현재 누적: ${currentReports}회)`);
+            alert(`신고가 접수되었습니다. (현재 누적: ${result.count}회)`);
             reportedList.push(docId);
             localStorage.setItem('choir_reported_links', JSON.stringify(reportedList));
         }
