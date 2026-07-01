@@ -1,4 +1,4 @@
-import { toggleBoard, toggleIntegrated, closeModalWithHistory } from "./utils.js";
+import { toggleBoard, toggleIntegrated, closeModalWithHistory, escapeInAppBrowser } from "./utils.js";
 import { state } from "./state.js";
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { auth } from "./config.js";
@@ -12,6 +12,9 @@ import {
     openPartManager, closePartManager, configurePart, clearPart, sendErrorReport, syncLinksFromDB
 } from "./links.js"; 
 import { searchAndRedirect } from "./search.js";
+
+// 카카오톡/네이버/인스타그램 등 인앱 브라우저에서는 로그인·클립보드 기능이 제한될 수 있어 외부 브라우저로 유도
+escapeInAppBrowser();
 
 // --- 전역 함수 등록 ---
 window.toggleBoard = toggleBoard;

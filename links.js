@@ -135,6 +135,7 @@ export function openPlayModal(slot) {
             btn.disabled = false;
         } else {
             btn.classList.add('unlinked');
+            btn.disabled = true;
         }
     });
 
