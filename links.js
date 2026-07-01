@@ -738,7 +738,7 @@ export async function reportSharedLink(docId) {
 
 // --- 오류 신고 메일 ---
 export function sendErrorReport() {
-    const email = "faiths3927@gmail.com";
+    const email = "csy0645009@gmail.com";
     const subject = "[성가대 연습실] 오류 신고";
     const body = "오류 내용을 적어주세요:\n\n";
     window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
