@@ -1,7 +1,8 @@
 import { getDocs, addDoc, deleteDoc, updateDoc, doc, query, where, orderBy, limit, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { db, recurringLinksCollection, sharedLinksCollection, groupLinksCollection, groupsCollection } from "./config.js";
 import { state } from "./state.js";
-import { isValidYoutubeUrl, normalizeUrl, openModalWithHistory, closeModalWithHistory, hashPassword, bindPressActions } from "./utils.js";
+import { isValidYoutubeUrl, isValidChoirLink, normalizeUrl, openModalWithHistory, closeModalWithHistory, hashPassword, bindPressActions } from "./utils.js";
+import { performSearch } from "./search.js";
 
 const REPORT_THRESHOLD = 3;
 const PART_KEYS = ['sop', 'alt', 'ten', 'bas'];
@@ -188,6 +189,9 @@ export function openSongEditModal(songId) {
     document.getElementById('shared-search-msg').style.display = 'none';
     document.getElementById('group-search-input').value = '';
     document.getElementById('group-search-msg').style.display = 'none';
+    document.getElementById('joongang-search-input').value = '';
+    document.getElementById('joongang-search-msg').innerText = '';
+    document.getElementById('joongang-search-msg').style.display = 'none';
 
     const removeBtn = document.getElementById('btn-remove-song');
     if (removeBtn) removeBtn.style.display = song ? 'inline-block' : 'none';
@@ -210,7 +214,7 @@ export async function saveSongLink() {
     const urlAll = normalizeUrl(document.getElementById('part-link-url').value.trim());
 
     if (!title) { alert("제목을 입력해야 합니다."); return; }
-    if (!isValidYoutubeUrl(urlAll)) { alert("합창 링크는 유튜브 주소만 가능합니다."); return; }
+    if (!isValidChoirLink(urlAll)) { alert("합창 링크는 유튜브 주소 또는 중앙아트 링크만 가능합니다."); return; }
 
     const urls = { all: urlAll };
     PART_KEYS.forEach(p => {
@@ -469,6 +473,78 @@ export function applySharedData(key) {
     if (sharedMsg.style.display !== 'none') sharedMsg.innerHTML = successHtml;
 }
 
+// --- 중앙아트 카탈로그에서 곡 찾아 합창 링크 채우기 ---
+export function searchJoongangArt() {
+    const searchInput = document.getElementById('joongang-search-input').value.trim();
+    const msgEl = document.getElementById('joongang-search-msg');
+
+    if (!searchInput) {
+        msgEl.innerText = "검색어를 입력해주세요.";
+        msgEl.style.display = 'block';
+        return;
+    }
+
+    const matches = performSearch(searchInput);
+    msgEl.style.display = 'block';
+
+    if (matches.length === 0) {
+        msgEl.innerText = `"${searchInput}"에 해당하는 곡을 중앙아트에서 찾을 수 없습니다.\n유튜브 링크를 직접 입력해주세요.`;
+        return;
+    }
+
+    renderJoongangResults(matches, msgEl);
+}
+
+// DOM API로 검색 결과 렌더링 (innerHTML XSS 방지)
+function renderJoongangResults(matches, msgEl) {
+    const container = document.createElement('div');
+    container.className = 'shared-list-container';
+
+    matches.forEach(match => {
+        const item = document.createElement('div');
+        item.className = 'shared-item';
+
+        const info = document.createElement('div');
+        info.className = 'shared-info';
+
+        const songTitle = document.createElement('span');
+        songTitle.className = 'shared-song-title';
+        songTitle.textContent = match.title; // textContent로 XSS 차단
+
+        const bookTitle = document.createElement('span');
+        bookTitle.className = 'shared-book-title';
+        bookTitle.textContent = `[${match.collectionName}]`;
+
+        info.appendChild(songTitle);
+        info.appendChild(bookTitle);
+
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'shared-btn-group';
+
+        const selectBtn = document.createElement('button');
+        selectBtn.className = 'btn-select-data';
+        selectBtn.textContent = '선택';
+        selectBtn.addEventListener('click', () => applyJoongangMatch(match));
+        btnGroup.appendChild(selectBtn);
+
+        item.appendChild(info);
+        item.appendChild(btnGroup);
+        container.appendChild(item);
+    });
+
+    msgEl.innerHTML = '';
+    msgEl.appendChild(container);
+}
+
+function applyJoongangMatch(match) {
+    document.getElementById('part-link-title').value = match.title;
+    document.getElementById('part-link-book').value = match.collectionName;
+    document.getElementById('part-link-url').value = match.url;
+
+    const msgEl = document.getElementById('joongang-search-msg');
+    msgEl.innerHTML = `<div style="color:var(--primary-color); font-weight:bold; margin-top:10px;">✅ 중앙아트 링크가 적용되었습니다.<br>아래 [저장] 버튼을 꼭 눌러주세요.</div>`;
+}
+
 export async function shareSongLink() {
     const title = document.getElementById('part-link-title').value.trim();
     const bookTitle = document.getElementById('part-link-book').value.trim();
@@ -478,8 +554,8 @@ export async function shareSongLink() {
         alert("제목, 책 제목, 합창 링크는 필수입니다.");
         return;
     }
-    if (!isValidYoutubeUrl(urlAll)) {
-        alert("합창 링크가 유튜브 주소가 아닙니다.");
+    if (!isValidChoirLink(urlAll)) {
+        alert("합창 링크는 유튜브 주소 또는 중앙아트 링크만 가능합니다.");
         return;
     }
 
