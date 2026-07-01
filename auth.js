@@ -1,7 +1,7 @@
 import { getDocs, addDoc, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { groupsCollection } from "./config.js";
 import { state } from "./state.js";
-import { loadShortcutLinks, syncLinksFromDB } from "./links.js";
+import { syncLinksFromDB } from "./links.js";
 import { hashPassword } from "./utils.js";
 
 export async function createGroup() {
@@ -118,6 +118,9 @@ export async function boardLogin() {
         const boardModule = await import("./board.js");
         boardModule.loadPosts();
         syncLinksFromDB(groupData);
+
+        const weeklyModule = await import("./weekly.js");
+        weeklyModule.loadWeeklySongs(false);
     } catch (e) {
         console.error(e);
         alert("로그인 중 오류가 발생했습니다.");

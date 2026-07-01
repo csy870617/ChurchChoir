@@ -5,12 +5,11 @@ import { auth } from "./config.js";
 import { createGroup, boardLogin, boardLogout, inviteMember } from "./auth.js";
 import { showWriteForm, showBoardList, savePost, tryDeletePost, tryEditPost, loadPosts } from "./board.js";
 import {
-    loadShortcutLinks, openShortcutLink, openShortcutManager, configureShortcut, clearShortcut, removeLink, searchAndSetLink,
-    openDirectLink, loadPartLinks, openPartLinkModal, searchGroupLinks, searchSharedLinks, applySharedData, reportSharedLink,
-    savePartLink, sharePartLink, removePartLink, refreshShortcutManager,
-    closePartLinkModal, closeShortcutManager, closeLinkActionModal, openPlayModal, closePlayModal,
-    openPartManager, closePartManager, configurePart, clearPart, sendErrorReport, syncLinksFromDB
-} from "./links.js"; 
+    openDirectLink, openSongEditModal, searchGroupLinks, searchSharedLinks, applySharedData, reportSharedLink,
+    saveSongLink, shareSongLink, deleteSongLink, moveSongLink,
+    closeSongModal, closePlayModal, sendErrorReport
+} from "./links.js";
+import { openWeeklyAddModal, saveWeeklySong, deleteWeeklySong, closeWeeklyModal, loadWeeklySongs } from "./weekly.js";
 import { searchAndRedirect } from "./search.js";
 
 // 카카오톡/네이버/인스타그램 등 인앱 브라우저에서는 로그인·클립보드 기능이 제한될 수 있어 외부 브라우저로 유도
@@ -28,36 +27,28 @@ window.showBoardList = showBoardList;
 window.savePost = savePost;
 window.tryDeletePost = tryDeletePost;
 window.tryEditPost = tryEditPost;
-window.loadShortcutLinks = loadShortcutLinks;
-window.openShortcutLink = openShortcutLink;
-window.openShortcutManager = openShortcutManager;
-window.configureShortcut = configureShortcut;
-window.clearShortcut = clearShortcut;
-window.removeLink = removeLink;
-window.searchAndSetLink = searchAndSetLink;
 window.openDirectLink = openDirectLink;
-window.openPartLinkModal = openPartLinkModal;
+window.openSongEditModal = openSongEditModal;
 window.searchGroupLinks = searchGroupLinks;
 window.searchSharedLinks = searchSharedLinks;
 window.applySharedData = applySharedData;
 window.reportSharedLink = reportSharedLink;
-window.savePartLink = savePartLink;
-window.sharePartLink = sharePartLink;
-window.removePartLink = removePartLink;
+window.saveSongLink = saveSongLink;
+window.shareSongLink = shareSongLink;
+window.deleteSongLink = deleteSongLink;
+window.moveSongLink = moveSongLink;
 window.searchAndRedirect = searchAndRedirect;
 window.loadMorePosts = () => loadPosts(true);
 
-window.openPlayModal = openPlayModal;
 window.closePlayModal = closePlayModal;
-window.openPartManager = openPartManager;
-window.closePartManager = closePartManager;
-window.configurePart = configurePart;
-window.clearPart = clearPart;
-window.sendErrorReport = sendErrorReport; 
+window.closeSongModal = closeSongModal;
+window.sendErrorReport = sendErrorReport;
 
-window.closeShortcutManager = closeShortcutManager;
-window.closeLinkActionModal = closeLinkActionModal;
-window.closePartLinkModal = closePartLinkModal;
+window.openWeeklyAddModal = openWeeklyAddModal;
+window.saveWeeklySong = saveWeeklySong;
+window.deleteWeeklySong = deleteWeeklySong;
+window.closeWeeklyModal = closeWeeklyModal;
+window.loadMoreWeekly = () => loadWeeklySongs(true);
 
 // ✨ 초기화 이벤트 (순서 중요: 인증 -> 로직 실행)
 window.addEventListener('DOMContentLoaded', () => {
@@ -68,10 +59,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
         // 2. 인증이 성공한 후에야 DB 조회(로그인 시도)를 시작합니다.
         checkAndLogin();
-        
-        // 3. 로컬에 저장된 기본 링크 정보 로드 (화면 그리기용)
-        loadShortcutLinks();
-        loadPartLinks(); 
 
     }).catch((e) => {
         console.error("Auth Fail", e);

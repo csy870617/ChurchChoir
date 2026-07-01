@@ -1,5 +1,3 @@
-import { saveLinkToStorage, loadShortcutLinks, refreshShortcutManager } from "./links.js";
-import { state } from "./state.js";
 import { openModalWithHistory, closeModalWithHistory } from "./utils.js";
 
 export function performSearch(userInput) {
@@ -46,12 +44,12 @@ export function searchAndRedirect(form) {
     const matches = performSearch(userInput);
     if (matches.length === 0) { alert("검색 결과가 없습니다."); }
     else if (matches.length === 1) { window.open(matches[0].url, '_blank'); }
-    else { showSelectionPopup(matches, false); }
+    else { showSelectionPopup(matches); }
     return false;
 }
 
 // DOM API로 팝업 생성 (innerHTML XSS 방지)
-export function showSelectionPopup(matches, isSetupMode) {
+export function showSelectionPopup(matches) {
     openModalWithHistory('selection-modal');
     const optionsList = document.getElementById('modal-options-list');
     optionsList.innerHTML = '';
@@ -63,24 +61,14 @@ export function showSelectionPopup(matches, isSetupMode) {
         strong.textContent = match.title; // textContent로 XSS 차단
 
         const span = document.createElement('span');
-        span.textContent = `[${match.collectionName}] 버전으로 ${isSetupMode ? '선택' : '연결'}`;
+        span.textContent = `[${match.collectionName}] 버전으로 연결`;
 
         item.appendChild(strong);
         item.appendChild(span);
         item.onclick = () => {
-            if (isSetupMode) { selectAndSetLink(match); }
-            else { window.open(match.url, '_blank'); closeModalWithHistory(); }
+            window.open(match.url, '_blank');
+            closeModalWithHistory();
         };
         optionsList.appendChild(item);
     });
 }
-
-function selectAndSetLink(match) {
-    saveLinkToStorage(state.currentLinkSlot, match);
-    alert(`'${match.title}' 곡이 즐겨찾기 ${state.currentLinkSlot}에 설정되었습니다.`);
-    closeModalWithHistory(); // 모든 모달이 한 번에 닫힘 (saveLinkToStorage 내부 호출은 중복 실행되지 않음)
-    refreshShortcutManager();
-    loadShortcutLinks();
-}
-
-window.selectAndSetLink = selectAndSetLink; // Global for dynamic HTML

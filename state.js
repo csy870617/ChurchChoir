@@ -2,12 +2,9 @@ export const state = {
     currentPostId: null,
     currentChurchName: null,
     currentGroupId: null,
-    currentLinkSlot: null, 
-    currentLoginPw: null, 
-    currentPart: null,
-    currentPartSlot: 1,
+    currentLoginPw: null,
+    currentSongId: null, // 재생/수정 모달이 대상으로 하는 찬양(recurring 또는 weekly) 문서 id
     searchResultsCache: {},
-    lastVisible: null // ✨ 더 보기를 위해 마지막 글 위치 저장
+    lastVisible: null, // ✨ 공지사항 더 보기를 위해 마지막 글 위치 저장
+    lastVisibleWeekly: null // ✨ 새 찬양 더 보기를 위해 마지막 글 위치 저장
 };
-
-export const partNames = { 'all': '전체', 'sop': '소프라노', 'alt': '알토', 'ten': '테너', 'bas': '베이스' };

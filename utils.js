@@ -130,6 +130,43 @@ window.addEventListener('popstate', () => {
     modals.forEach(el => el.style.display = 'none');
 });
 
+// 우클릭(데스크톱)/롱프레스(모바일)로 항목 관리 동작을 여는 헬퍼
+// 짧은 탭/클릭은 onTap, 길게 누르거나 우클릭하면 onLongPress를 호출한다
+export function bindPressActions(el, { onTap, onLongPress }) {
+    const LONG_PRESS_MS = 550;
+    let pressTimer = null;
+    let longPressFired = false;
+
+    const clearPressTimer = () => {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    };
+
+    el.addEventListener('touchstart', () => {
+        longPressFired = false;
+        clearPressTimer();
+        pressTimer = setTimeout(() => {
+            longPressFired = true;
+            onLongPress();
+        }, LONG_PRESS_MS);
+    }, { passive: true });
+
+    el.addEventListener('touchmove', clearPressTimer);
+    el.addEventListener('touchend', clearPressTimer);
+    el.addEventListener('touchcancel', clearPressTimer);
+
+    el.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        // 모바일에서 롱프레스로 이미 처리된 제스처는 contextmenu로 중복 실행되지 않도록 방지
+        if (longPressFired) { longPressFired = false; return; }
+        onLongPress();
+    });
+
+    el.addEventListener('click', () => {
+        if (longPressFired) { longPressFired = false; return; }
+        onTap();
+    });
+}
+
 // UI 제어
 export function toggleBoard(forceOpen = false, currentGroupId) {
     const wrapper = document.getElementById('integrated-content-wrapper');
