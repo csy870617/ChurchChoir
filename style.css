@@ -165,25 +165,54 @@ header h1 {
 .login-btn { background: var(--primary-gradient); color: white; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 .login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3); }
 
-/* Shortcuts & Buttons (Grid Layout) */
-.shortcut-links-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.btn-link {
-    width: 100%; padding: 12px 10px; background-color: var(--primary-color); color: white;
-    border: 1px solid var(--primary-color); border-radius: 8px; font-size: 0.95em; font-weight: 500;
-    cursor: pointer; transition: all 0.2s ease;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.btn-link:hover { background-color: var(--accent-color); border-color: var(--accent-color); transform: translateY(-1px); }
-.btn-link.unlinked { background-color: #fff; color: #999; border: 1px solid #e0e0e0; cursor: default; }
-.btn-link.unlinked:hover { background-color: #fff; transform: none; }
-.settings-btn { background-color: #f8f9fa; color: #555; border: 1px solid #e0e0e0; }
-.settings-btn:hover { background-color: #eee; border-color: #ccc; color: #333; }
-
-/* Song Links Section */
-.manual-content-area { 
+/* 찬양 자료 / 공지사항 박스 분리 */
+.content-box {
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 25px;
+    background-color: #fff;
     text-align: left;
-    margin-bottom: 30px; 
 }
+.content-box-title { margin: 0 0 15px 0; color: var(--text-main); font-size: 1.05em; font-weight: 800; }
+
+.song-subsection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.song-subsection-header h5 { margin: 0; color: #555; font-size: 0.95em; }
+.btn-add-item {
+    background-color: var(--primary-color); color: #fff; border: none;
+    border-radius: 20px; padding: 6px 14px; font-size: 0.85em; font-weight: 700;
+    cursor: pointer; transition: 0.2s;
+}
+.btn-add-item:hover { background-color: var(--accent-color); }
+.section-hint { font-size: 0.78em; color: #aaa; margin: 0 0 12px 0; }
+
+/* 매주 반복 찬양 목록 */
+.song-list { display: flex; flex-direction: column; gap: 8px; }
+.song-item {
+    display: flex; flex-direction: column; padding: 12px 14px;
+    border: 1px solid var(--border-color); border-radius: 10px;
+    background-color: #f8f9fa; cursor: pointer; transition: 0.15s;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.song-item:hover { border-color: var(--primary-color); background-color: #f0f3ff; }
+.song-item-title { font-size: 1em; font-weight: 700; color: var(--text-main); }
+.song-item-book { font-size: 0.8em; color: var(--primary-color); margin-top: 2px; }
+
+/* 이번주 새 찬양 목록 */
+.weekly-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.weekly-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border: 1px solid var(--border-color); border-radius: 10px;
+    background-color: #f8f9fa; cursor: pointer; transition: 0.15s;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.weekly-item:hover { border-color: var(--primary-color); background-color: #f0f3ff; }
+.weekly-item-date {
+    font-size: 0.8em; font-weight: 700; color: #fff; background: var(--primary-gradient);
+    border-radius: 6px; padding: 3px 8px; white-space: nowrap; flex-shrink: 0;
+}
+.weekly-item-title { font-size: 0.98em; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.weekly-item-title.has-link { color: var(--primary-color); font-weight: 600; }
 
 /* Play Popup */
 .play-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -330,15 +359,8 @@ footer a { color: #999; text-decoration: none; }
 .btn-select-data { background: var(--primary-gradient); color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 700; width: 100%; }
 .btn-report-data { background: #fff; color: #999; border: 1px solid #eee; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8em; width: 100%; }
 .btn-report-data:hover { color: var(--danger-red); border-color: var(--danger-red); background: #fff5f5; }
-#part-link-modal .input-full-url { width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; margin-bottom: 20px; font-size: 1.05em; display: block; background-color: #fff; } 
+#part-link-modal .input-full-url, #weekly-modal .input-full-url { width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; margin-bottom: 20px; font-size: 1.05em; display: block; background-color: #fff; }
 #part-link-title { background-color: #f8f9fa; border: 2px solid #e2e8f0; color: var(--primary-color); font-weight: 700; }
-.shortcut-manage-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px; background-color: #f9f9f9; }
-.shortcut-info { text-align: left; flex-grow: 1; overflow: hidden; }
-.slot-label { font-size: 0.8em; color: var(--primary-color); display: block; margin-bottom: 2px; font-weight: 600; }
-.slot-title { font-size: 1em; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-.shortcut-actions { display: flex; gap: 5px; margin-left: 10px; }
-.btn-search-slot { background-color: var(--primary-color); color: white; border: none; }
-.btn-delete-slot { background-color: #fff; color: var(--danger-red); border: 1px solid var(--danger-red); }
 
 .move-btn-group {
     display: flex;
@@ -372,3 +394,5 @@ footer a { color: #999; text-decoration: none; }
     background-color: #e2e8f0;
     transform: scale(0.95); /* 눌렀을 때 살짝 작아지는 효과 */
 }
+.btn-move:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-move:disabled:hover { background-color: #fff; color: #666; border-color: #ddd; }

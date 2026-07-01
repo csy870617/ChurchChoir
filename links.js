@@ -1,140 +1,154 @@
-import { getDocs, addDoc, deleteDoc, updateDoc, doc, getDoc, query, where, limit, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { db, sharedLinksCollection, groupLinksCollection, groupsCollection } from "./config.js";
-import { state, partNames } from "./state.js";
-import { isValidYoutubeUrl, normalizeUrl, openModalWithHistory, closeModalWithHistory, hashPassword } from "./utils.js";
-import { performSearch, showSelectionPopup } from "./search.js";
+import { getDocs, addDoc, deleteDoc, updateDoc, doc, query, where, orderBy, limit, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { db, recurringLinksCollection, sharedLinksCollection, groupLinksCollection, groupsCollection } from "./config.js";
+import { state } from "./state.js";
+import { isValidYoutubeUrl, normalizeUrl, openModalWithHistory, closeModalWithHistory, hashPassword, bindPressActions } from "./utils.js";
 
 const REPORT_THRESHOLD = 3;
+const PART_KEYS = ['sop', 'alt', 'ten', 'bas'];
 
-export function closePartLinkModal() { closeModalWithHistory(); }
-export function closeShortcutManager() { closeModalWithHistory(); }
-export function closeLinkActionModal() { closeModalWithHistory(); }
+export function closeSongModal() { closeModalWithHistory(); }
 export function closePlayModal() { closeModalWithHistory(); }
-export function closePartManager() { closeModalWithHistory(); }
 
-let dbShortcuts = {};
-let dbPartLinks = {};
+let recurringSongs = []; // [{id, order, title, bookTitle, urls: {all, sop, alt, ten, bas}}]
 
-export function syncLinksFromDB(groupData) {
-    dbShortcuts = groupData.shortcuts || {};
-    dbPartLinks = groupData.partLinks || {};
-    loadShortcutLinks();
-    loadPartLinks();
-}
+// --- 그룹 로그인 시 기존 즐겨찾기(3슬롯)·찬양곡 링크(3슬롯) 데이터를 새 리스트 구조로 1회 자동 이전 ---
+async function migrateOldLinksIfNeeded(groupData) {
+    if (!state.currentGroupId || groupData.linksMigrated) return;
 
-// 순서 변경
-export async function moveItem(type, currentSlot, direction) {
-    if (!state.currentGroupId) {
-        alert("로그인 정보가 없습니다. 다시 로그인해주세요.");
+    const oldShortcuts = groupData.shortcuts || {};
+    const oldPartLinks = groupData.partLinks || {};
+
+    if (Object.keys(oldShortcuts).length === 0 && Object.keys(oldPartLinks).length === 0) {
+        try {
+            await updateDoc(doc(groupsCollection, state.currentGroupId), { linksMigrated: true });
+        } catch (e) { console.error("이전 플래그 저장 실패:", e); }
         return;
     }
 
-    const offset = direction === 'up' ? -1 : 1;
-    const targetSlot = currentSlot + offset;
-
-    if (targetSlot < 1 || targetSlot > 3) return;
+    let order = Date.now();
+    const migratedTitles = new Set();
 
     try {
-        const dbMap = (type === 'shortcut') ? dbShortcuts : dbPartLinks;
+        for (const slot of Object.keys(oldPartLinks)) {
+            const slotData = oldPartLinks[slot];
+            const allData = slotData ? slotData['all'] : null;
+            if (!allData || !allData.url) continue;
 
-        // 스왑 결과를 미리 계산만 하고, DB 쓰기에 성공한 뒤에 로컬/화면에 반영
-        // (DB 쓰기 실패 시 화면 순서와 DB가 어긋나던 문제 방지)
-        const newCurrent = dbMap[targetSlot] || null;
-        const newTarget = dbMap[currentSlot] || null;
+            const urls = { all: allData.url };
+            PART_KEYS.forEach(p => {
+                if (slotData[p] && slotData[p].url) urls[p] = slotData[p].url;
+            });
 
-        const groupRef = doc(groupsCollection, state.currentGroupId);
-        const fieldPrefix = (type === 'shortcut') ? 'shortcuts' : 'partLinks';
-        const updateData = {
-            [`${fieldPrefix}.${currentSlot}`]: newCurrent,
-            [`${fieldPrefix}.${targetSlot}`]: newTarget,
-        };
-        await updateDoc(groupRef, updateData);
-
-        // DB 반영 성공 후에만 로컬 상태 갱신
-        if (newCurrent === null) delete dbMap[currentSlot]; else dbMap[currentSlot] = newCurrent;
-        if (newTarget === null) delete dbMap[targetSlot]; else dbMap[targetSlot] = newTarget;
-
-        if (type === 'shortcut') {
-            refreshShortcutManager();
-            loadShortcutLinks();
-        } else {
-            refreshPartManager();
-            loadPartLinks();
+            await addDoc(recurringLinksCollection, {
+                groupId: state.currentGroupId,
+                order: order++,
+                title: allData.title || '제목 없음',
+                bookTitle: allData.bookTitle || '',
+                urls
+            });
+            if (allData.title) migratedTitles.add(allData.title);
         }
+
+        for (const slot of Object.keys(oldShortcuts)) {
+            const data = oldShortcuts[slot];
+            if (!data || !data.url) continue;
+            if (data.title && migratedTitles.has(data.title)) continue; // 찬양곡 링크로 이미 이전된 곡은 중복 생성 방지
+
+            await addDoc(recurringLinksCollection, {
+                groupId: state.currentGroupId,
+                order: order++,
+                title: data.title || '제목 없음',
+                bookTitle: '',
+                urls: { all: data.url }
+            });
+        }
+
+        await updateDoc(doc(groupsCollection, state.currentGroupId), { linksMigrated: true });
+    } catch (e) {
+        console.error("기존 링크 데이터 이전 실패:", e);
+        // linksMigrated 플래그를 남기지 않아 다음 로그인 때 재시도됨
+    }
+}
+
+export async function syncLinksFromDB(groupData) {
+    await migrateOldLinksIfNeeded(groupData);
+    await loadRecurringSongs();
+}
+
+// --- 매주 반복 찬양 목록 ---
+export async function loadRecurringSongs() {
+    const listEl = document.getElementById('recurring-list');
+    if (!listEl || !state.currentGroupId) return;
+
+    listEl.innerHTML = '<div class="empty-msg">불러오는 중...</div>';
+
+    try {
+        const q = query(recurringLinksCollection, where("groupId", "==", state.currentGroupId), orderBy("order", "asc"));
+        const snap = await getDocs(q);
+        recurringSongs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderRecurringSongs();
     } catch (e) {
         console.error(e);
-        alert("순서 변경 중 오류 발생: " + e.message);
-    }
-}
-
-// --- 찬양곡 슬롯 관리 (Manager) ---
-export function openPartManager() {
-    refreshPartManager();
-    openModalWithHistory('part-manager-modal');
-}
-
-export function refreshPartManager() {
-    for (let i = 1; i <= 3; i++) {
-        const slotData = dbPartLinks[i];
-        const linkData = slotData ? slotData['all'] : null;
-        const titleEl = document.getElementById(`part-manage-title-${i}`);
-
-        if (linkData && linkData.title) {
-            titleEl.innerText = linkData.title;
-            titleEl.style.color = '#333';
-        } else {
-            titleEl.innerText = "설정안됨";
-            titleEl.style.color = '#ccc';
+        if (e.code === 'failed-precondition') {
+            console.log("Firestore 색인이 필요합니다. 콘솔의 링크를 확인하세요.");
         }
+        listEl.innerHTML = '<div class="empty-msg">불러오기 실패.<br>(관리자가 콘솔을 확인해주세요)</div>';
     }
 }
 
-export function configurePart(slot) {
-    state.currentPartSlot = slot;
-    openPartLinkModal('all');
-}
+// DOM API로 목록 렌더링 (innerHTML XSS 방지)
+function renderRecurringSongs() {
+    const listEl = document.getElementById('recurring-list');
+    listEl.innerHTML = '';
 
-export async function clearPart(slot) {
-    if (confirm(`링크 ${slot}번을 삭제하시겠습니까?`)) {
-        delete dbPartLinks[slot];
-        if (state.currentGroupId) {
-            try {
-                const groupRef = doc(groupsCollection, state.currentGroupId);
-                await updateDoc(groupRef, { [`partLinks.${slot}`]: null });
-            } catch (e) {
-                console.error(e);
-                alert("삭제 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
-            }
+    if (recurringSongs.length === 0) {
+        listEl.innerHTML = '<div class="empty-msg">등록된 찬양이 없습니다.<br>아래 [＋ 곡 추가]로 등록해보세요.</div>';
+        return;
+    }
+
+    recurringSongs.forEach(song => {
+        const item = document.createElement('div');
+        item.className = 'song-item';
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'song-item-title';
+        titleSpan.textContent = song.title; // textContent로 XSS 차단
+        item.appendChild(titleSpan);
+
+        if (song.bookTitle) {
+            const bookSpan = document.createElement('span');
+            bookSpan.className = 'song-item-book';
+            bookSpan.textContent = song.bookTitle;
+            item.appendChild(bookSpan);
         }
-        refreshPartManager();
-        loadPartLinks();
-    }
+
+        bindPressActions(item, {
+            onTap: () => openSongPlayModal(song.id),
+            onLongPress: () => openSongEditModal(song.id)
+        });
+
+        listEl.appendChild(item);
+    });
 }
 
 // --- 듣기 팝업 ---
-export function openPlayModal(slot) {
-    if (slot) state.currentPartSlot = slot;
-    else slot = state.currentPartSlot || 1;
+export function openSongPlayModal(songId) {
+    const song = recurringSongs.find(s => s.id === songId);
+    if (!song) return;
+    state.currentSongId = songId;
 
-    const slotData = dbPartLinks[slot];
-    const linkData = slotData ? slotData['all'] : null;
+    document.getElementById('play-modal-title').innerText = song.title;
 
-    if (!linkData) {
-        configurePart(slot);
-        return;
-    }
-
-    document.getElementById('play-modal-title').innerText = linkData.title;
-
-    ['all', 'sop', 'alt', 'ten', 'bas'].forEach(part => {
-        const partData = slotData[part];
+    ['all', ...PART_KEYS].forEach(part => {
+        const url = song.urls ? song.urls[part] : null;
         const btn = document.getElementById(`modal-play-${part}`);
-
-        if (partData && partData.url) {
+        if (!btn) return;
+        if (url) {
             btn.classList.remove('unlinked');
             btn.disabled = false;
         } else {
             btn.classList.add('unlinked');
+            btn.disabled = true;
         }
     });
 
@@ -143,343 +157,160 @@ export function openPlayModal(slot) {
 
 // 팝업 내부 바로 듣기
 export function openDirectLink(part) {
-    const slot = state.currentPartSlot;
-    const slotData = dbPartLinks[slot];
-    const partData = slotData ? slotData[part] : null;
+    const song = recurringSongs.find(s => s.id === state.currentSongId);
+    const url = song && song.urls ? song.urls[part] : null;
 
-    if (partData && partData.url) {
-        window.open(partData.url, '_blank');
+    if (url) {
+        window.open(url, '_blank');
     } else {
         alert('등록된 링크가 없습니다.');
     }
 }
 
-// --- 파트 링크 모달 ---
-export function openPartLinkModal(part) {
-    state.currentPart = part;
-    const slot = state.currentPartSlot;
+// --- 찬양 등록/수정 모달 ---
+export function openSongEditModal(songId) {
+    state.currentSongId = songId || null;
+    const idx = songId ? recurringSongs.findIndex(s => s.id === songId) : -1;
+    const song = idx >= 0 ? recurringSongs[idx] : null;
 
-    const slotData = dbPartLinks[slot];
-    const partData = slotData ? slotData[part] : null;
-    const allData = slotData ? slotData['all'] : null;
+    document.getElementById('part-modal-title').innerText = song ? '찬양 수정' : '새 찬양 추가';
+    document.getElementById('part-link-title').value = song ? song.title : '';
+    document.getElementById('part-link-book').value = song ? (song.bookTitle || '') : '';
+    document.getElementById('part-link-url').value = (song && song.urls) ? (song.urls.all || '') : '';
 
-    document.getElementById('part-modal-title').innerText = `${partNames[part]} 링크 설정 (슬롯 ${slot})`;
+    PART_KEYS.forEach(p => {
+        const el = document.getElementById(`part-link-url-${p}`);
+        if (el) el.value = (song && song.urls) ? (song.urls[p] || '') : '';
+    });
 
-    const titleInput = document.getElementById('part-link-title');
-    const bookInput = document.getElementById('part-link-book');
-    const extraInputs = document.getElementById('extra-part-inputs');
-    const sharedSearchArea = document.getElementById('shared-search-area');
-    const groupSearchArea = document.getElementById('group-search-area');
+    document.getElementById('shared-search-input').value = '';
+    document.getElementById('shared-search-msg').innerText = '';
+    document.getElementById('shared-search-msg').style.display = 'none';
+    document.getElementById('group-search-input').value = '';
+    document.getElementById('group-search-msg').style.display = 'none';
 
-    if (extraInputs) {
-        if (part === 'all') {
-            titleInput.style.display = 'block';
-            titleInput.value = (allData && allData.title) ? allData.title : '';
-            bookInput.value = (allData && allData.bookTitle) ? allData.bookTitle : '';
-            bookInput.style.display = 'block';
-            extraInputs.style.display = 'block';
-            sharedSearchArea.style.display = 'block';
-            groupSearchArea.style.display = state.currentGroupId ? 'block' : 'none';
+    const removeBtn = document.getElementById('btn-remove-song');
+    if (removeBtn) removeBtn.style.display = song ? 'inline-block' : 'none';
 
-            document.getElementById('shared-search-input').value = '';
-            document.getElementById('shared-search-msg').innerText = '';
-            document.getElementById('shared-search-msg').style.display = 'none';
-            document.getElementById('group-search-input').value = '';
-            document.getElementById('group-search-msg').style.display = 'none';
+    const moveGroup = document.getElementById('song-move-group');
+    if (moveGroup) moveGroup.style.display = song ? 'flex' : 'none';
+    const moveUpBtn = document.getElementById('btn-song-move-up');
+    const moveDownBtn = document.getElementById('btn-song-move-down');
+    if (moveUpBtn) moveUpBtn.disabled = !song || idx <= 0;
+    if (moveDownBtn) moveDownBtn.disabled = !song || idx >= recurringSongs.length - 1;
 
-            ['sop', 'alt', 'ten', 'bas'].forEach(p => {
-                const pData = slotData ? slotData[p] : null;
-                const inputEl = document.getElementById(`part-link-url-${p}`);
-                if (inputEl) { inputEl.value = (pData && pData.url) ? pData.url : ''; }
-            });
-        } else {
-            titleInput.style.display = 'none';
-            bookInput.style.display = 'none';
-            extraInputs.style.display = 'none';
-            sharedSearchArea.style.display = 'none';
-            groupSearchArea.style.display = 'none';
-        }
-    }
-
-    document.getElementById('part-link-url').value = (partData && partData.url) ? partData.url : '';
     openModalWithHistory('part-link-modal');
 }
 
-export async function savePartLink() {
-    const slot = state.currentPartSlot;
-    // 프로토콜이 없으면 https:// 를 붙여 저장 (없으면 window.open이 상대경로로 열려 404 발생)
-    const mainUrl = normalizeUrl(document.getElementById('part-link-url').value.trim());
+export async function saveSongLink() {
+    if (!state.currentGroupId) { alert("로그인 정보가 없습니다. 다시 로그인해주세요."); return; }
 
-    if (state.currentPart === 'all') {
-        const title = document.getElementById('part-link-title').value.trim();
-        const bookTitle = document.getElementById('part-link-book').value.trim();
-        if (!title) { alert("제목을 입력해야 합니다."); return; }
-        if (!isValidYoutubeUrl(mainUrl)) { alert("합창 링크는 유튜브 주소만 가능합니다."); return; }
+    const title = document.getElementById('part-link-title').value.trim();
+    const bookTitle = document.getElementById('part-link-book').value.trim();
+    const urlAll = normalizeUrl(document.getElementById('part-link-url').value.trim());
 
-        const allData = { url: mainUrl, title, bookTitle };
-        const sharedUrls = { all: mainUrl };
-        const parts = ['sop', 'alt', 'ten', 'bas'];
+    if (!title) { alert("제목을 입력해야 합니다."); return; }
+    if (!isValidYoutubeUrl(urlAll)) { alert("합창 링크는 유튜브 주소만 가능합니다."); return; }
 
-        if (!dbPartLinks[slot]) dbPartLinks[slot] = {};
-        dbPartLinks[slot]['all'] = allData;
+    const urls = { all: urlAll };
+    PART_KEYS.forEach(p => {
+        const el = document.getElementById(`part-link-url-${p}`);
+        const url = el ? normalizeUrl(el.value.trim()) : '';
+        if (url) urls[p] = url;
+    });
 
-        parts.forEach(p => {
-            const inputEl = document.getElementById(`part-link-url-${p}`);
-            if (inputEl) {
-                const url = normalizeUrl(inputEl.value.trim());
-                if (url) {
-                    dbPartLinks[slot][p] = { url, title };
-                    sharedUrls[p] = url;
-                }
-            }
-        });
+    const songId = state.currentSongId;
 
-        if (state.currentGroupId) {
-            try {
-                const groupRef = doc(groupsCollection, state.currentGroupId);
-                await updateDoc(groupRef, { [`partLinks.${slot}`]: dbPartLinks[slot] });
-            } catch (e) {
-                console.error(e);
-                alert("저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
-                return;
-            }
-
-            try {
-                const searchTitle = title.replace(/\s+/g, '').toLowerCase();
-                const q = query(
-                    groupLinksCollection,
-                    where("groupId", "==", state.currentGroupId),
-                    where("searchTitle", "==", searchTitle),
-                    where("bookTitle", "==", bookTitle)
-                );
-                const querySnapshot = await getDocs(q);
-                const dataToSave = {
-                    groupId: state.currentGroupId,
-                    title,
-                    searchTitle,
-                    bookTitle,
-                    urls: sharedUrls,
-                    updatedAt: new Date().toISOString()
-                };
-                if (!querySnapshot.empty) {
-                    await updateDoc(doc(db, "group_links", querySnapshot.docs[0].id), dataToSave);
-                } else {
-                    await addDoc(groupLinksCollection, dataToSave);
-                }
-            } catch (e) { console.log("Search save failed", e); }
+    try {
+        if (songId) {
+            await updateDoc(doc(recurringLinksCollection, songId), { title, bookTitle, urls });
+        } else {
+            await addDoc(recurringLinksCollection, {
+                groupId: state.currentGroupId,
+                order: Date.now(),
+                title, bookTitle, urls
+            });
         }
-
-        loadPartLinks();
-        refreshPartManager();
-        closePartLinkModal();
+    } catch (e) {
+        console.error(e);
+        alert("저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
         return;
     }
 
-    // 개별 파트 저장
-    if (!isValidYoutubeUrl(mainUrl)) { alert("유튜브 주소만 가능합니다."); return; }
-    if (!dbPartLinks[slot]) dbPartLinks[slot] = {};
-    const currentTitle = dbPartLinks[slot]['all'] ? dbPartLinks[slot]['all'].title : partNames[state.currentPart];
-    dbPartLinks[slot][state.currentPart] = { url: mainUrl, title: currentTitle };
-
-    if (state.currentGroupId) {
-        try {
-            const groupRef = doc(groupsCollection, state.currentGroupId);
-            await updateDoc(groupRef, { [`partLinks.${slot}.${state.currentPart}`]: dbPartLinks[slot][state.currentPart] });
-        } catch (e) {
-            console.error(e);
-            alert("저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
-            return;
+    // 다른 곡 등록 시 검색에 활용되는 그룹 검색 데이터도 함께 갱신 (기존 기능 유지)
+    try {
+        const searchTitle = title.replace(/\s+/g, '').toLowerCase();
+        const q = query(
+            groupLinksCollection,
+            where("groupId", "==", state.currentGroupId),
+            where("searchTitle", "==", searchTitle),
+            where("bookTitle", "==", bookTitle)
+        );
+        const querySnapshot = await getDocs(q);
+        const dataToSave = {
+            groupId: state.currentGroupId,
+            title, searchTitle, bookTitle, urls,
+            updatedAt: new Date().toISOString()
+        };
+        if (!querySnapshot.empty) {
+            await updateDoc(doc(db, "group_links", querySnapshot.docs[0].id), dataToSave);
+        } else {
+            await addDoc(groupLinksCollection, dataToSave);
         }
-    }
+    } catch (e) { console.log("Search save failed", e); }
 
-    loadPartLinks();
-    refreshPartManager();
-    closePartLinkModal();
+    closeSongModal();
+    await loadRecurringSongs();
 }
 
-export async function removePartLink() {
+export async function deleteSongLink() {
     if (!state.currentLoginPw) { alert("로그인 후 이용 가능합니다."); return; }
+    if (!state.currentSongId) return;
+
     const inputPw = prompt("삭제하시려면 비밀번호를 입력해주세요.");
     if (inputPw === null) return;
     const hashedInput = await hashPassword(inputPw);
     if (hashedInput !== state.currentLoginPw) { alert("비밀번호가 일치하지 않습니다."); return; }
 
-    const slot = state.currentPartSlot;
     try {
-        if (state.currentPart === 'all') {
-            delete dbPartLinks[slot];
-            if (state.currentGroupId) {
-                const groupRef = doc(groupsCollection, state.currentGroupId);
-                await updateDoc(groupRef, { [`partLinks.${slot}`]: null });
-            }
-            document.getElementById('part-link-url').value = '';
-            document.getElementById('part-link-title').value = '';
-            document.getElementById('part-link-book').value = '';
-            ['sop', 'alt', 'ten', 'bas'].forEach(p => {
-                const el = document.getElementById(`part-link-url-${p}`);
-                if (el) el.value = '';
-            });
-        } else {
-            if (dbPartLinks[slot]) delete dbPartLinks[slot][state.currentPart];
-            if (state.currentGroupId) {
-                const groupRef = doc(groupsCollection, state.currentGroupId);
-                await updateDoc(groupRef, { [`partLinks.${slot}.${state.currentPart}`]: null });
-            }
-        }
+        await deleteDoc(doc(recurringLinksCollection, state.currentSongId));
     } catch (e) {
         console.error(e);
         alert("삭제 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
+        return;
     }
-    loadPartLinks();
-    refreshPartManager();
-    closePartLinkModal();
+
+    closeSongModal();
+    await loadRecurringSongs();
 }
 
-// --- 메인 화면 버튼 업데이트 ---
-export function loadPartLinks() {
-    for (let i = 1; i <= 3; i++) {
-        const slotData = dbPartLinks[i];
-        const linkData = slotData ? slotData['all'] : null;
-        const btn = document.getElementById(`btn-part-${i}`);
-        if (!btn) continue;
+// 순서 변경 (편집 모달 내 위/아래 버튼)
+export async function moveSongLink(direction) {
+    const songId = state.currentSongId;
+    const idx = recurringSongs.findIndex(s => s.id === songId);
+    if (idx === -1) return;
 
-        btn.style.color = '';
-        btn.style.backgroundColor = '';
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= recurringSongs.length) return;
 
-        if (linkData && linkData.title) {
-            btn.innerText = linkData.title;
-            btn.classList.remove('unlinked');
-        } else {
-            btn.innerText = `링크 ${i}`;
-            btn.classList.add('unlinked');
-        }
+    const current = recurringSongs[idx];
+    const target = recurringSongs[targetIdx];
+
+    try {
+        // 스왑 결과를 DB에 먼저 반영한 뒤 목록을 다시 불러와 화면과 DB가 어긋나지 않도록 함
+        await updateDoc(doc(recurringLinksCollection, current.id), { order: target.order });
+        await updateDoc(doc(recurringLinksCollection, target.id), { order: current.order });
+    } catch (e) {
+        console.error(e);
+        alert("순서 변경 중 오류가 발생했습니다: " + e.message);
+        return;
     }
+
+    await loadRecurringSongs();
+    openSongEditModal(songId);
 }
 
-// --- 즐겨찾기 관련 ---
-export function loadShortcutLinks() {
-    for (let i = 1; i <= 3; i++) {
-        updateLinkButton(i, dbShortcuts[i]);
-    }
-}
-
-function updateLinkButton(slot, data) {
-    const btn = document.getElementById(`btn-shortcut-${slot}`);
-    if (!btn) return;
-    btn.style.backgroundColor = '';
-    btn.style.color = '';
-    btn.style.borderColor = '';
-    if (data && data.url) {
-        btn.innerText = data.title;
-        btn.classList.remove('unlinked');
-    } else {
-        btn.innerText = `즐겨찾기 ${slot}`;
-        btn.classList.add('unlinked');
-    }
-}
-
-export function openShortcutLink(slot) {
-    const data = dbShortcuts[slot];
-    if (data && data.url) { window.open(data.url, '_blank'); }
-    else { configureShortcut(slot); }
-}
-
-export function openShortcutManager() {
-    refreshShortcutManager();
-    openModalWithHistory('shortcut-manager-modal');
-}
-
-export function refreshShortcutManager() {
-    for (let i = 1; i <= 3; i++) {
-        const data = dbShortcuts[i];
-        const titleEl = document.getElementById(`manage-title-${i}`);
-        if (data) {
-            titleEl.innerText = data.title;
-            titleEl.style.color = '#333';
-        } else {
-            titleEl.innerText = "설정안됨";
-            titleEl.style.color = '#ccc';
-        }
-    }
-}
-
-export function configureShortcut(slot) {
-    state.currentLinkSlot = slot;
-    document.getElementById('action-search-input').value = '';
-    document.getElementById('action-search-message').style.display = 'none';
-    openModalWithHistory('link-action-modal');
-}
-
-export async function saveLinkToStorage(slot, match) {
-    const data = { title: match.title, url: match.url, collectionName: match.collectionName };
-    dbShortcuts[slot] = data;
-    if (state.currentGroupId) {
-        try {
-            const groupRef = doc(groupsCollection, state.currentGroupId);
-            await updateDoc(groupRef, { [`shortcuts.${slot}`]: data });
-        } catch (e) {
-            console.error(e);
-            alert("즐겨찾기 저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
-        }
-    }
-    refreshShortcutManager();
-    loadShortcutLinks();
-    closeLinkActionModal();
-}
-
-export async function removeLink() {
-    if (!state.currentLoginPw) { alert("로그인 후 이용 가능합니다."); return; }
-    if (confirm(`정말 즐겨찾기 ${state.currentLinkSlot}을(를) 해제하시겠습니까?`)) {
-        delete dbShortcuts[state.currentLinkSlot];
-        if (state.currentGroupId) {
-            try {
-                const groupRef = doc(groupsCollection, state.currentGroupId);
-                await updateDoc(groupRef, { [`shortcuts.${state.currentLinkSlot}`]: null });
-            } catch (e) {
-                console.error(e);
-                alert("해제 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
-            }
-        }
-        updateLinkButton(state.currentLinkSlot, null);
-        refreshShortcutManager();
-        closeLinkActionModal();
-    }
-}
-
-export function searchAndSetLink(form) {
-    const userInput = form.setupQuery.value.trim();
-    document.getElementById('action-search-message').style.display = 'none';
-    if (!userInput) return false;
-    const matches = performSearch(userInput);
-    if (matches.length === 1) {
-        saveLinkToStorage(state.currentLinkSlot, matches[0]);
-    } else if (matches.length > 1) {
-        showSelectionPopup(matches, true);
-    } else {
-        document.getElementById('action-search-message').innerText = `"${userInput}"에 해당하는 곡을 찾을 수 없습니다.`;
-        document.getElementById('action-search-message').style.display = 'block';
-    }
-    return false;
-}
-
-export async function clearShortcut(slot) {
-    if (confirm(`즐겨찾기 ${slot}번을 삭제하시겠습니까?`)) {
-        delete dbShortcuts[slot];
-        if (state.currentGroupId) {
-            try {
-                const groupRef = doc(groupsCollection, state.currentGroupId);
-                await updateDoc(groupRef, { [`shortcuts.${slot}`]: null });
-            } catch (e) {
-                console.error(e);
-                alert("삭제 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
-            }
-        }
-        refreshShortcutManager();
-        loadShortcutLinks();
-    }
-}
-
-// --- 검색 및 공유 ---
+// --- 검색 및 공유 (기존 기능 유지) ---
 export async function searchGroupLinks() {
     const searchInput = document.getElementById('group-search-input').value.trim();
     const msgEl = document.getElementById('group-search-msg');
@@ -626,7 +457,7 @@ export function applySharedData(key) {
     document.getElementById('part-link-title').value = data.title || '';
     document.getElementById('part-link-book').value = data.bookTitle || '';
     document.getElementById('part-link-url').value = urls.all || '';
-    ['sop', 'alt', 'ten', 'bas'].forEach(p => {
+    PART_KEYS.forEach(p => {
         const el = document.getElementById(`part-link-url-${p}`);
         if (el) el.value = urls[p] || '';
     });
@@ -638,12 +469,7 @@ export function applySharedData(key) {
     if (sharedMsg.style.display !== 'none') sharedMsg.innerHTML = successHtml;
 }
 
-export async function sharePartLink() {
-    if (state.currentPart !== 'all') {
-        alert("전체 설정 모드에서만 공유할 수 있습니다.");
-        return;
-    }
-
+export async function shareSongLink() {
     const title = document.getElementById('part-link-title').value.trim();
     const bookTitle = document.getElementById('part-link-book').value.trim();
     const urlAll = normalizeUrl(document.getElementById('part-link-url').value.trim());
@@ -660,7 +486,7 @@ export async function sharePartLink() {
     const sharedUrls = { all: urlAll };
     let missing = false;
     let invalid = false;
-    ['sop', 'alt', 'ten', 'bas'].forEach(p => {
+    PART_KEYS.forEach(p => {
         const val = normalizeUrl(document.getElementById(`part-link-url-${p}`).value.trim());
         if (!val) missing = true;
         else if (!isValidYoutubeUrl(val)) invalid = true;
@@ -737,10 +563,8 @@ export async function reportSharedLink(docId) {
 
 // --- 오류 신고 메일 ---
 export function sendErrorReport() {
-    const email = "faiths3927@gmail.com";
+    const email = "csy0645009@gmail.com";
     const subject = "[성가대 연습실] 오류 신고";
     const body = "오류 내용을 적어주세요:\n\n";
     window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
-
-window.moveItem = moveItem;

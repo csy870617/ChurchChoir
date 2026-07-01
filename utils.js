@@ -41,11 +41,28 @@ export function normalizeUrl(url) {
     return /^https?:\/\//i.test(url) ? url : 'https://' + url;
 }
 
+// URL 끝에 붙은 문장부호(마침표, 쉼표, 닫는 괄호 등)는 링크에서 제외하고 본문 텍스트로 되돌림
+// (괄호는 URL 안에 짝이 맞는 여는 괄호가 있으면 보존)
+function trimTrailingPunctuation(url) {
+    let trimmed = url.replace(/[.,!?;:'"]+$/, '');
+    while (trimmed.endsWith(')')) {
+        const openCount = (trimmed.match(/\(/g) || []).length;
+        const closeCount = (trimmed.match(/\)/g) || []).length;
+        if (closeCount > openCount) {
+            trimmed = trimmed.slice(0, -1);
+        } else {
+            break;
+        }
+    }
+    return trimmed;
+}
+
 // 링크 텍스트 변환 (XSS 방지: 텍스트는 이스케이프, URL만 링크로 변환)
 export function convertUrlsToLinks(text) {
     if (!text) return '';
     // https?:// 로 시작하는 URL만 허용 (javascript: 등 차단)
-    const urlRegex = /\bhttps?:\/\/[^\s"<>]+/g;
+    // 한글(자모/음절)이 공백 없이 바로 이어질 경우 URL이 거기서 끊기도록 제외 (예: "...com입니다")
+    const urlRegex = /\bhttps?:\/\/[^\s"'<>ㄱ-ㆎ가-힣]+/g;
     const parts = [];
     let lastIndex = 0;
     let match;
@@ -55,7 +72,7 @@ export function convertUrlsToLinks(text) {
         if (match.index > lastIndex) {
             parts.push(escapeHtml(text.slice(lastIndex, match.index)));
         }
-        const url = match[0];
+        const url = trimTrailingPunctuation(match[0]);
         parts.push(`<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(url)}</a>`);
         lastIndex = match.index + url.length;
     }
@@ -112,6 +129,43 @@ window.addEventListener('popstate', () => {
     const modals = document.querySelectorAll('.modal-overlay');
     modals.forEach(el => el.style.display = 'none');
 });
+
+// 우클릭(데스크톱)/롱프레스(모바일)로 항목 관리 동작을 여는 헬퍼
+// 짧은 탭/클릭은 onTap, 길게 누르거나 우클릭하면 onLongPress를 호출한다
+export function bindPressActions(el, { onTap, onLongPress }) {
+    const LONG_PRESS_MS = 550;
+    let pressTimer = null;
+    let longPressFired = false;
+
+    const clearPressTimer = () => {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    };
+
+    el.addEventListener('touchstart', () => {
+        longPressFired = false;
+        clearPressTimer();
+        pressTimer = setTimeout(() => {
+            longPressFired = true;
+            onLongPress();
+        }, LONG_PRESS_MS);
+    }, { passive: true });
+
+    el.addEventListener('touchmove', clearPressTimer);
+    el.addEventListener('touchend', clearPressTimer);
+    el.addEventListener('touchcancel', clearPressTimer);
+
+    el.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        // 모바일에서 롱프레스로 이미 처리된 제스처는 contextmenu로 중복 실행되지 않도록 방지
+        if (longPressFired) { longPressFired = false; return; }
+        onLongPress();
+    });
+
+    el.addEventListener('click', () => {
+        if (longPressFired) { longPressFired = false; return; }
+        onTap();
+    });
+}
 
 // UI 제어
 export function toggleBoard(forceOpen = false, currentGroupId) {
