@@ -72,7 +72,15 @@
                     <h2 id="room-title-church"></h2>
                     <p id="room-title-choir" class="room-subtitle"></p>
                 </div>
-                <button type="button" class="btn-logout" onclick="logoutRoom()">나가기</button>
+                <div class="room-header-actions">
+                    <button type="button" class="btn-invite" onclick="inviteMembers()">
+                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                            <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0-12 4 4m-4-4-4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/>
+                        </svg>
+                        초대
+                    </button>
+                    <button type="button" class="btn-logout" onclick="logoutRoom()">나가기</button>
+                </div>
             </div>
 
             <div class="board-block">
@@ -80,6 +88,7 @@
                     <h3>공지사항</h3>
                     <button type="button" id="btn-show-write" class="btn-write" onclick="showWriteForm()">✏️ 글쓰기</button>
                 </div>
+                <p class="section-hint">길게 누르거나 마우스 오른쪽 버튼을 클릭하면 수정할 수 있어요.</p>
 
                 <div id="board-list">
                     <div id="post-items"></div>
@@ -94,8 +103,13 @@
                     </div>
                     <textarea id="write-content" class="input-full" placeholder="공지할 내용을 자유롭게 작성하세요"></textarea>
                     <div class="write-actions">
-                        <button type="button" class="btn-small btn-cancel" onclick="showBoardList()">취소</button>
-                        <button type="button" class="btn-small btn-save" onclick="savePost()">등록</button>
+                        <div class="left-group">
+                            <button type="button" id="btn-delete-post" class="btn-small btn-danger" style="display: none;" onclick="deletePostFromForm()">삭제</button>
+                        </div>
+                        <div class="right-group">
+                            <button type="button" class="btn-small btn-cancel" onclick="showBoardList()">취소</button>
+                            <button type="button" class="btn-small btn-save" onclick="savePost()">등록</button>
+                        </div>
                     </div>
                 </div>
             </div>

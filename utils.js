@@ -95,6 +95,17 @@ export function convertUrlsToLinks(text) {
     return parts.join('');
 }
 
+// 클립보드 복사 (Clipboard API 미지원 환경 대비)
+export function copyToClipboard(text) {
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+        prompt("이 링크를 복사해서 공유하세요:", text);
+        return;
+    }
+    navigator.clipboard.writeText(text)
+        .then(() => alert("초대 링크가 복사되었습니다!\n카톡이나 문자에 '붙여넣기' 하세요."))
+        .catch(() => prompt("이 링크를 복사해서 공유하세요:", text));
+}
+
 // 모달용 히스토리 항목은 항상 1개만 유지 (중첩 모달 + 연속 닫기 시 뒤로가기 중복 방지)
 let modalStatePushed = false;
 

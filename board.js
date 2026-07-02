@@ -1,7 +1,7 @@
 import { getDocs, addDoc, deleteDoc, updateDoc, doc, getDoc, query, where, limit, orderBy, startAfter } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { boardCollection } from "./config.js";
 import { state } from "./state.js";
-import { convertUrlsToLinks } from "./utils.js";
+import { convertUrlsToLinks, bindPressActions } from "./utils.js";
 
 const POSTS_PER_PAGE = 5;
 
@@ -67,7 +67,8 @@ export async function loadPosts(isMore = false) {
 
 export function loadMorePosts() { loadPosts(true); }
 
-// DOM API로 게시글 카드 생성 (innerHTML XSS 방지)
+// DOM API로 게시글 카드 생성 (innerHTML XSS 차단). 버튼 없이 내용만 깔끔하게 보여주고,
+// 길게 누르거나 우클릭하면 수정 화면(삭제 포함)이 열린다.
 function createPostCard(post) {
     const div = document.createElement('div');
     div.className = 'post-card';
@@ -97,27 +98,13 @@ function createPostCard(post) {
     body.className = 'post-body';
     body.innerHTML = convertUrlsToLinks(post.content);
 
-    const footer = document.createElement('div');
-    footer.className = 'post-footer';
-
-    const editBtn = document.createElement('button');
-    editBtn.type = 'button';
-    editBtn.className = 'btn-small btn-edit';
-    editBtn.textContent = '수정';
-    editBtn.addEventListener('click', () => tryEditPost(post.id));
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.type = 'button';
-    deleteBtn.className = 'btn-small btn-delete';
-    deleteBtn.textContent = '삭제';
-    deleteBtn.addEventListener('click', () => tryDeletePost(post.id));
-
-    footer.appendChild(editBtn);
-    footer.appendChild(deleteBtn);
-
     div.appendChild(header);
     div.appendChild(body);
-    div.appendChild(footer);
+
+    bindPressActions(div, {
+        onTap: () => {},
+        onLongPress: () => tryEditPost(post.id)
+    });
 
     return div;
 }
@@ -127,6 +114,7 @@ export function showWriteForm() {
     document.getElementById('write-title').value = '';
     document.getElementById('write-content').value = '';
     document.getElementById('write-author').value = '';
+    document.getElementById('btn-delete-post').style.display = 'none';
     document.getElementById('board-list').style.display = 'none';
     document.getElementById('btn-show-write').style.display = 'none';
     document.getElementById('board-write').style.display = 'block';
@@ -167,14 +155,6 @@ export async function savePost() {
     } catch (e) { console.error(e); alert("저장 중 오류가 발생했습니다."); }
 }
 
-export async function tryDeletePost(id) {
-    if (!confirm("정말 이 게시글을 삭제하시겠습니까?")) return;
-    try {
-        await deleteDoc(doc(boardCollection, id));
-        loadPosts(false);
-    } catch (e) { console.error(e); alert("삭제 중 오류가 발생했습니다."); }
-}
-
 export async function tryEditPost(id) {
     try {
         const docRef = doc(boardCollection, id);
@@ -185,9 +165,20 @@ export async function tryEditPost(id) {
             document.getElementById('write-title').value = post.title;
             document.getElementById('write-content').value = post.content;
             document.getElementById('write-author').value = post.author;
+            document.getElementById('btn-delete-post').style.display = 'inline-flex';
             document.getElementById('board-list').style.display = 'none';
             document.getElementById('btn-show-write').style.display = 'none';
             document.getElementById('board-write').style.display = 'block';
         }
     } catch (e) { console.error(e); }
+}
+
+export async function deletePostFromForm() {
+    const id = document.getElementById('edit-mode-id').value;
+    if (!id) return;
+    if (!confirm("정말 이 게시글을 삭제하시겠습니까?")) return;
+    try {
+        await deleteDoc(doc(boardCollection, id));
+        showBoardList();
+    } catch (e) { console.error(e); alert("삭제 중 오류가 발생했습니다."); }
 }
