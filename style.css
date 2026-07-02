@@ -150,58 +150,6 @@ body::before {
 }
 
 /* ============================================
-   Ad card
-   ============================================ */
-.ad-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-top: 44px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 14px 16px;
-    text-decoration: none;
-    transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
-}
-.ad-card:hover {
-    border-color: var(--border-strong);
-    background: var(--surface-2);
-    transform: translateY(-1px);
-}
-.ad-icon {
-    width: 40px;
-    height: 40px;
-    object-fit: contain;
-    border-radius: 10px;
-    background: var(--surface-2);
-    flex-shrink: 0;
-}
-.ad-text {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    text-align: left;
-}
-.ad-text strong {
-    font-size: 0.88em;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.ad-text em {
-    font-style: normal;
-    font-size: 0.78em;
-    color: var(--text-secondary);
-}
-.ad-arrow { color: var(--text-tertiary); flex-shrink: 0; transition: transform 0.15s ease, color 0.15s ease; }
-.ad-card:hover .ad-arrow { transform: translateX(3px); color: var(--text-primary); }
-
-/* ============================================
    Footer
    ============================================ */
 footer {
