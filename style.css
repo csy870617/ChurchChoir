@@ -1,19 +1,36 @@
 /* ============================================
-   Design tokens — 다크 톤 + 절제된 그라디언트 포인트
+   Design tokens — 라이트 모드(기본) + 다크 모드
    ============================================ */
 :root {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --surface-2: #f2f2f4;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #86868b;
+    --accent: #0a84ff;
+    --accent-2: #5e5ce6;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.16);
+    --glow-1: rgba(10, 132, 255, 0.16);
+    --glow-2: rgba(94, 92, 230, 0.08);
+    --overlay: rgba(0, 0, 0, 0.35);
+
+    --font: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+:root[data-theme="dark"] {
     --bg: #000000;
     --surface: #1c1c1e;
     --surface-2: #2c2c2e;
     --text-primary: #f5f5f7;
     --text-secondary: #98989d;
     --text-tertiary: #6e6e73;
-    --accent: #0a84ff;
-    --accent-2: #5e5ce6;
     --border: rgba(255, 255, 255, 0.10);
     --border-strong: rgba(255, 255, 255, 0.20);
-
-    --font: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --glow-1: rgba(10, 132, 255, 0.28);
+    --glow-2: rgba(94, 92, 230, 0.14);
+    --overlay: rgba(0, 0, 0, 0.6);
 }
 
 * { box-sizing: border-box; }
@@ -35,6 +52,7 @@ body {
     -webkit-font-smoothing: antialiased;
     position: relative;
     overflow-x: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* 배경의 은은한 앰비언트 글로우 */
@@ -46,11 +64,38 @@ body::before {
     transform: translateX(-50%);
     width: 640px;
     height: 640px;
-    background: radial-gradient(circle, rgba(10, 132, 255, 0.28), rgba(94, 92, 230, 0.14) 45%, transparent 72%);
+    background: radial-gradient(circle, var(--glow-1), var(--glow-2) 45%, transparent 72%);
     filter: blur(70px);
     pointer-events: none;
     z-index: 0;
+    transition: background 0.2s ease;
 }
+
+/* ============================================
+   라이트/다크 모드 전환 버튼
+   ============================================ */
+.theme-toggle {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.theme-toggle:hover { border-color: var(--border-strong); color: var(--text-primary); }
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle .icon-moon { display: block; }
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
 
 /* ============================================
    Layout
@@ -171,7 +216,7 @@ footer a:hover { color: var(--text-secondary); text-decoration: underline; }
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--overlay);
     backdrop-filter: blur(20px) saturate(150%);
     -webkit-backdrop-filter: blur(20px) saturate(150%);
     display: none;
