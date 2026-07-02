@@ -313,8 +313,13 @@ footer a:hover { color: var(--text-secondary); text-decoration: underline; }
     margin: 0 0 4px;
 }
 .room-subtitle { font-size: 0.85em; font-weight: 500; color: var(--text-secondary); margin: 0; }
-.btn-logout {
+
+.room-header-actions { flex-shrink: 0; display: flex; gap: 8px; }
+.btn-invite, .btn-logout {
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-secondary);
@@ -324,8 +329,10 @@ footer a:hover { color: var(--text-secondary); text-decoration: underline; }
     padding: 8px 14px;
     border-radius: 999px;
     cursor: pointer;
-    transition: border-color 0.15s ease, color 0.15s ease;
+    transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
+.btn-invite { color: var(--accent); border-color: rgba(10, 132, 255, 0.35); }
+.btn-invite:hover { background: rgba(10, 132, 255, 0.1); border-color: rgba(10, 132, 255, 0.55); }
 .btn-logout:hover { border-color: var(--border-strong); color: var(--text-primary); }
 
 .board-block {
@@ -378,10 +385,9 @@ footer a:hover { color: var(--text-secondary); text-decoration: underline; }
 .post-title { font-size: 1em; font-weight: 700; color: var(--text-primary); }
 .post-meta { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 0.78em; color: var(--text-tertiary); }
 .post-date { color: var(--text-tertiary); }
-.post-body { font-size: 0.92em; line-height: 1.65; color: var(--text-secondary); white-space: pre-wrap; margin-bottom: 12px; word-break: break-word; }
+.post-body { font-size: 0.92em; line-height: 1.65; color: var(--text-secondary); white-space: pre-wrap; word-break: break-word; }
 .post-body a { color: var(--accent); text-decoration: none; }
 .post-body a:hover { text-decoration: underline; }
-.post-footer { display: flex; justify-content: flex-end; gap: 8px; }
 
 /* 글쓰기 폼 */
 .write-form { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
@@ -400,17 +406,17 @@ footer a:hover { color: var(--text-secondary); text-decoration: underline; }
 .input-author { flex: 3; min-width: 0; }
 .input-full { width: 100%; display: block; margin-bottom: 10px; }
 textarea.input-full { height: 130px; resize: vertical; line-height: 1.6; }
-.write-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.write-actions { display: flex; justify-content: space-between; align-items: center; }
 
 .btn-small { padding: 9px 16px; font-size: 0.88em; border-radius: 10px; cursor: pointer; border: none; font-family: inherit; font-weight: 600; transition: 0.15s; }
 .btn-save { background: var(--accent); color: #fff; }
 .btn-save:hover { background: #3399ff; }
 .btn-outline { background: transparent; color: var(--accent); border: 1px solid rgba(10, 132, 255, 0.5); }
 .btn-outline:hover { background: rgba(10, 132, 255, 0.12); }
-.btn-cancel, .btn-edit { background: var(--surface-2); color: var(--text-secondary); border: 1px solid var(--border); }
-.btn-cancel:hover, .btn-edit:hover { color: var(--text-primary); border-color: var(--border-strong); }
-.btn-delete, .btn-danger { background: transparent; color: #ff453a; border: 1px solid rgba(255, 69, 58, 0.4); }
-.btn-delete:hover, .btn-danger:hover { background: rgba(255, 69, 58, 0.12); }
+.btn-cancel { background: var(--surface-2); color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-cancel:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.btn-danger { background: transparent; color: #ff453a; border: 1px solid rgba(255, 69, 58, 0.4); }
+.btn-danger:hover { background: rgba(255, 69, 58, 0.12); }
 .btn-load-more {
     width: 100%;
     margin-top: 10px;
