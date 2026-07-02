@@ -5,7 +5,7 @@ import { auth } from "./config.js";
 import { createGroup, boardLogin, boardLogout, inviteMember } from "./auth.js";
 import { showWriteForm, showBoardList, savePost, tryDeletePost, tryEditPost, loadPosts } from "./board.js";
 import {
-    openDirectLink, openSongEditModal, searchGroupLinks, searchSharedLinks, applySharedData, reportSharedLink,
+    openDirectLink, openSongEditModal, searchGroupLinks, searchSharedLinks, searchJoongangArt, applySharedData, reportSharedLink,
     saveSongLink, shareSongLink, deleteSongLink, moveSongLink,
     closeSongModal, closePlayModal, sendErrorReport
 } from "./links.js";
@@ -31,6 +31,7 @@ window.openDirectLink = openDirectLink;
 window.openSongEditModal = openSongEditModal;
 window.searchGroupLinks = searchGroupLinks;
 window.searchSharedLinks = searchSharedLinks;
+window.searchJoongangArt = searchJoongangArt;
 window.applySharedData = applySharedData;
 window.reportSharedLink = reportSharedLink;
 window.saveSongLink = saveSongLink;

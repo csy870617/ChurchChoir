@@ -181,7 +181,11 @@
                 <div class="section-title">주소 입력 및 저장</div>
                 <div class="title-row" style="display: flex; gap: 8px; margin-bottom: 10px;">
                     <input type="text" id="part-link-title" class="input-full-url" style="flex: 1.2; margin-bottom: 0;" placeholder="노래 제목 (필수)"><input type="text" id="part-link-book" class="input-full-url" style="flex: 0.8; margin-bottom: 0;" placeholder="책 제목"></div>
-                <input type="text" id="part-link-url" class="input-full-url" placeholder="합창 링크 (유튜브, 필수)">
+                <div id="joongang-search-area" style="margin-bottom: 8px;">
+                    <div class="link-action-search" style="margin-bottom: 5px;">
+                        <input type="text" id="joongang-search-input" placeholder="중앙아트에서 찬양곡 검색" onkeydown="if(event.key === 'Enter') { event.preventDefault(); searchJoongangArt(); }"><button type="button" onclick="searchJoongangArt()" style="background: #17a2b8;">검색</button></div><div id="joongang-search-msg" style="font-size: 0.85em; color: #888;"></div></div>
+                <p class="section-hint" style="margin: -4px 0 10px;">검색 결과를 선택하면 제목과 합창 링크가 자동으로 채워져요. 곡이 없다면 유튜브 링크를 아래에 직접 붙여넣으셔도 돼요.</p>
+                <input type="text" id="part-link-url" class="input-full-url" placeholder="합창 링크 (유튜브 또는 중앙아트, 필수)">
                 <div id="extra-part-inputs">
                     <div class="part-input-group"><input type="text" id="part-link-url-sop" class="input-full-url input-part-small" placeholder="소프라노 링크"></div><div class="part-input-group"><input type="text" id="part-link-url-alt" class="input-full-url input-part-small" placeholder="알토 링크"></div><div class="part-input-group"><input type="text" id="part-link-url-ten" class="input-full-url input-part-small" placeholder="테너 링크"></div><div class="part-input-group"><input type="text" id="part-link-url-bas" class="input-full-url input-part-small" placeholder="베이스 링크"></div></div>
                 <div id="song-move-group" class="move-btn-group" style="display:none; flex-direction: row; gap: 8px; margin: 15px 0 0;">

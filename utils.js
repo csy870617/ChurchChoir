@@ -35,6 +35,18 @@ export function isValidYoutubeUrl(url) {
     return regex.test(url);
 }
 
+// 중앙아트(joongangart.kr) URL 검사
+export function isValidJoongangArtUrl(url) {
+    if (!url) return false;
+    const regex = /^(https?:\/\/)?([a-z0-9-]+\.)*joongangart\.kr\/.+$/i;
+    return regex.test(url);
+}
+
+// 합창 링크는 유튜브 또는 중앙아트 링크 둘 다 허용
+export function isValidChoirLink(url) {
+    return isValidYoutubeUrl(url) || isValidJoongangArtUrl(url);
+}
+
 // 프로토콜 없는 주소 보정 (window.open이 상대경로로 열리는 문제 방지)
 export function normalizeUrl(url) {
     if (!url) return url;
