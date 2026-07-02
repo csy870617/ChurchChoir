@@ -82,13 +82,16 @@ export async function createRoom() {
             return;
         }
 
-        await addDoc(groupsCollection, {
+        const roomData = {
             churchName: church,
             choirName: choir,
             password: hashedPw,
             createdAt: new Date().toISOString()
-        });
-        alert(`'${church} ${choir}' 연습실이 생성되었습니다!\n[입장하기]를 눌러 입장하세요.`);
+        };
+        const docRef = await addDoc(groupsCollection, roomData);
+
+        applyRoomLogin({ id: docRef.id, data: () => roomData });
+        closeRoomModal();
     } catch (e) {
         console.error(e);
         alert("연습실 생성 중 오류가 발생했습니다.");
