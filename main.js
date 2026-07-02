@@ -2,6 +2,7 @@ import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/fir
 import { auth } from "./config.js";
 import { closeModalWithHistory, escapeInAppBrowser, toggleCollapsible } from "./utils.js";
 import { searchAndRedirect } from "./search.js";
+import { toggleTheme } from "./theme.js";
 import { openRoomModal, closeRoomModal, createRoom, loginRoom, logoutRoom } from "./auth.js";
 import { showWriteForm, showBoardList, savePost, tryDeletePost, tryEditPost, loadMorePosts } from "./board.js";
 import {
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- 전역 함수 등록 ---
 window.searchAndRedirect = searchAndRedirect;
 window.toggleCollapsible = toggleCollapsible;
+window.toggleTheme = toggleTheme;
 
 window.openRoomModal = openRoomModal;
 window.closeRoomModal = closeRoomModal;
