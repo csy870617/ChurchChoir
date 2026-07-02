@@ -1,4 +1,4 @@
-import { toggleBoard, toggleIntegrated, closeModalWithHistory, escapeInAppBrowser } from "./utils.js";
+import { toggleBoard, toggleIntegrated, closeModalWithHistory, escapeInAppBrowser, toggleCollapsible } from "./utils.js";
 import { state } from "./state.js";
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { auth } from "./config.js";
@@ -9,7 +9,7 @@ import {
     saveSongLink, shareSongLink, deleteSongLink, moveSongLink,
     closeSongModal, closePlayModal, sendErrorReport
 } from "./links.js";
-import { openWeeklyAddModal, saveWeeklySong, deleteWeeklySong, closeWeeklyModal, loadWeeklySongs } from "./weekly.js";
+import { openWeeklyAddModal, saveWeeklySong, deleteWeeklySong, closeWeeklyModal, loadWeeklySongs, searchJoongangArtWeekly } from "./weekly.js";
 import { searchAndRedirect } from "./search.js";
 
 // 카카오톡/네이버/인스타그램 등 인앱 브라우저에서는 로그인·클립보드 기능이 제한될 수 있어 외부 브라우저로 유도
@@ -27,6 +27,7 @@ window.showBoardList = showBoardList;
 window.savePost = savePost;
 window.tryDeletePost = tryDeletePost;
 window.tryEditPost = tryEditPost;
+window.toggleCollapsible = toggleCollapsible;
 window.openDirectLink = openDirectLink;
 window.openSongEditModal = openSongEditModal;
 window.searchGroupLinks = searchGroupLinks;
@@ -50,6 +51,7 @@ window.saveWeeklySong = saveWeeklySong;
 window.deleteWeeklySong = deleteWeeklySong;
 window.closeWeeklyModal = closeWeeklyModal;
 window.loadMoreWeekly = () => loadWeeklySongs(true);
+window.searchJoongangArtWeekly = searchJoongangArtWeekly;
 
 // ✨ 초기화 이벤트 (순서 중요: 인증 -> 로직 실행)
 window.addEventListener('DOMContentLoaded', () => {

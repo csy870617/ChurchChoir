@@ -1,7 +1,7 @@
 import { getDocs, addDoc, deleteDoc, updateDoc, doc, query, where, orderBy, limit, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { db, recurringLinksCollection, sharedLinksCollection, groupLinksCollection, groupsCollection } from "./config.js";
 import { state } from "./state.js";
-import { isValidYoutubeUrl, isValidChoirLink, normalizeUrl, openModalWithHistory, closeModalWithHistory, hashPassword, bindPressActions } from "./utils.js";
+import { isValidYoutubeUrl, isValidChoirLink, normalizeUrl, openModalWithHistory, closeModalWithHistory, hashPassword, bindPressActions, setCollapsibleState } from "./utils.js";
 import { performSearch } from "./search.js";
 
 const REPORT_THRESHOLD = 3;
@@ -192,6 +192,11 @@ export function openSongEditModal(songId) {
     document.getElementById('joongang-search-input').value = '';
     document.getElementById('joongang-search-msg').innerText = '';
     document.getElementById('joongang-search-msg').style.display = 'none';
+
+    // 파트별 링크가 이미 있으면 펼쳐서 보여주고, 없으면 접어서 폼을 단순하게 유지
+    const hasPartLinks = !!(song && song.urls && PART_KEYS.some(p => song.urls[p]));
+    setCollapsibleState('extra-part-inputs', document.getElementById('btn-toggle-parts'), hasPartLinks);
+    setCollapsibleState('import-search-section', document.getElementById('btn-toggle-import'), false);
 
     const removeBtn = document.getElementById('btn-remove-song');
     if (removeBtn) removeBtn.style.display = song ? 'inline-block' : 'none';

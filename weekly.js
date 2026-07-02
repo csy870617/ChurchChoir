@@ -2,6 +2,7 @@ import { getDocs, addDoc, deleteDoc, updateDoc, doc, query, where, orderBy, limi
 import { weeklyLinksCollection } from "./config.js";
 import { state } from "./state.js";
 import { normalizeUrl, openModalWithHistory, closeModalWithHistory, bindPressActions } from "./utils.js";
+import { performSearch } from "./search.js";
 
 const WEEKLY_PER_PAGE = 5;
 
@@ -82,7 +83,10 @@ function createWeeklyItem(song) {
     item.appendChild(titleSpan);
 
     bindPressActions(item, {
-        onTap: () => { if (song.url) window.open(song.url, '_blank'); },
+        onTap: () => {
+            if (song.url) window.open(song.url, '_blank');
+            else alert('아직 등록된 링크가 없습니다.\n길게 누르거나 마우스 오른쪽 버튼을 클릭하면 링크를 추가할 수 있어요.');
+        },
         onLongPress: () => openWeeklyEditModal(song)
     });
 
@@ -96,6 +100,12 @@ function formatDate(dateStr) {
     return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
+function resetWeeklySearchArea() {
+    document.getElementById('weekly-joongang-search-input').value = '';
+    document.getElementById('weekly-joongang-search-msg').innerText = '';
+    document.getElementById('weekly-joongang-search-msg').style.display = 'none';
+}
+
 export function openWeeklyAddModal() {
     state.currentSongId = null;
     document.getElementById('weekly-modal-title').innerText = '새 찬양 추가';
@@ -103,6 +113,7 @@ export function openWeeklyAddModal() {
     document.getElementById('weekly-title').value = '';
     document.getElementById('weekly-url').value = '';
     document.getElementById('btn-remove-weekly').style.display = 'none';
+    resetWeeklySearchArea();
     openModalWithHistory('weekly-modal');
 }
 
@@ -113,7 +124,79 @@ function openWeeklyEditModal(song) {
     document.getElementById('weekly-title').value = song.title || '';
     document.getElementById('weekly-url').value = song.url || '';
     document.getElementById('btn-remove-weekly').style.display = 'inline-block';
+    resetWeeklySearchArea();
     openModalWithHistory('weekly-modal');
+}
+
+// --- 중앙아트 카탈로그에서 곡 찾아 링크 채우기 ---
+export function searchJoongangArtWeekly() {
+    const searchInput = document.getElementById('weekly-joongang-search-input').value.trim();
+    const msgEl = document.getElementById('weekly-joongang-search-msg');
+
+    if (!searchInput) {
+        msgEl.innerText = "검색어를 입력해주세요.";
+        msgEl.style.display = 'block';
+        return;
+    }
+
+    const matches = performSearch(searchInput);
+    msgEl.style.display = 'block';
+
+    if (matches.length === 0) {
+        msgEl.innerText = `"${searchInput}"에 해당하는 곡을 중앙아트에서 찾을 수 없습니다.\n유튜브 링크를 직접 입력해주세요.`;
+        return;
+    }
+
+    renderJoongangResultsWeekly(matches, msgEl);
+}
+
+// DOM API로 검색 결과 렌더링 (innerHTML XSS 방지)
+function renderJoongangResultsWeekly(matches, msgEl) {
+    const container = document.createElement('div');
+    container.className = 'shared-list-container';
+
+    matches.forEach(match => {
+        const item = document.createElement('div');
+        item.className = 'shared-item';
+
+        const info = document.createElement('div');
+        info.className = 'shared-info';
+
+        const songTitle = document.createElement('span');
+        songTitle.className = 'shared-song-title';
+        songTitle.textContent = match.title; // textContent로 XSS 차단
+
+        const bookTitle = document.createElement('span');
+        bookTitle.className = 'shared-book-title';
+        bookTitle.textContent = `[${match.collectionName}]`;
+
+        info.appendChild(songTitle);
+        info.appendChild(bookTitle);
+
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'shared-btn-group';
+
+        const selectBtn = document.createElement('button');
+        selectBtn.className = 'btn-select-data';
+        selectBtn.textContent = '선택';
+        selectBtn.addEventListener('click', () => applyJoongangMatchWeekly(match));
+        btnGroup.appendChild(selectBtn);
+
+        item.appendChild(info);
+        item.appendChild(btnGroup);
+        container.appendChild(item);
+    });
+
+    msgEl.innerHTML = '';
+    msgEl.appendChild(container);
+}
+
+function applyJoongangMatchWeekly(match) {
+    document.getElementById('weekly-title').value = match.title;
+    document.getElementById('weekly-url').value = match.url;
+
+    const msgEl = document.getElementById('weekly-joongang-search-msg');
+    msgEl.innerHTML = `<div style="color:var(--primary-color); font-weight:bold; margin-top:10px;">✅ 중앙아트 링크가 적용되었습니다.<br>아래 [저장] 버튼을 꼭 눌러주세요.</div>`;
 }
 
 export async function saveWeeklySong() {

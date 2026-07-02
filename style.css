@@ -186,6 +186,21 @@ header h1 {
 .btn-add-item:hover { background-color: var(--accent-color); }
 .section-hint { font-size: 0.78em; color: #aaa; margin: 0 0 12px 0; }
 
+/* 합창 링크 등록 방법 (중앙아트 검색 / 유튜브 붙여넣기) 구분 */
+.link-method-block { margin-bottom: 10px; }
+.link-method-label { margin: 0 0 6px 0; font-size: 0.9em; font-weight: 700; color: var(--text-main); }
+.link-method-divider { display: flex; align-items: center; text-align: center; color: #bbb; font-size: 0.8em; margin: 4px 0 14px; }
+.link-method-divider::before, .link-method-divider::after { content: ''; flex: 1; border-bottom: 1px solid #eee; }
+.link-method-divider span { padding: 0 10px; }
+
+/* 파트별 링크 / 다른 곳에서 가져오기 등 선택 섹션 펼치기 버튼 */
+.btn-toggle-section {
+    background: none; border: none; color: var(--primary-color); font-weight: 700;
+    font-size: 0.88em; padding: 6px 0; cursor: pointer; display: block; margin-top: 6px;
+}
+.btn-toggle-section:hover { text-decoration: underline; }
+.btn-toggle-section.open { color: var(--accent-color); }
+
 /* 매주 반복 찬양 목록 */
 .song-list { display: flex; flex-direction: column; gap: 8px; }
 .song-item {
