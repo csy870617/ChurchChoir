@@ -1,159 +1,275 @@
-/* CSS Reset & Global */
-/* ✨ 스크롤바 숨기기 (기능은 유지됨) */
-::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
-}
-body {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+/* ============================================
+   Design tokens — 모던하고 절제된 팔레트, 넉넉한 여백
+   ============================================ */
+:root {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #86868b;
+    --accent: #0071e3;
+    --accent-hover: #0060c0;
+    --border: #d2d2d7;
+    --border-light: #e8e8ed;
+    --danger: #ff3b30;
+
+    --radius-xl: 28px;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.12);
+
+    --font: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
+* { box-sizing: border-box; }
+
+/* 스크롤바 숨기기 (기능은 유지됨) */
+::-webkit-scrollbar { display: none; }
+body { -ms-overflow-style: none; scrollbar-width: none; }
+
 body {
-    font-family: 'Noto Sans KR', sans-serif;
-    background: #f4f6f9;
-    color: #333;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text-primary);
     margin: 0;
     padding: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================
+   Layout
+   ============================================ */
+.page {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 64px 20px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    gap: 18px;
+}
+
+/* ============================================
+   Search card
+   ============================================ */
+.card {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: 44px 32px 36px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(0, 0, 0, 0.04);
     text-align: center;
 }
 
-:root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --primary-color: #667eea;
-    --accent-color: #764ba2;
-    --text-main: #2d3436;
-    --text-sub: #636e72;
-    --danger-red: #ff7675;
-    --bg-white: #ffffff;
-    --border-color: #e2e8f0;
+.hero { margin-bottom: 28px; }
+.hero-badge {
+    display: inline-block;
+    font-size: 40px;
+    line-height: 1;
+    margin-bottom: 14px;
 }
-
-/* Container */
-.container {
-    background-color: var(--bg-white);
-    padding: 60px 40px;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
-    max-width: 600px;
-    width: 90%;
-    margin: 50px 0;
-    border: 1px solid rgba(255,255,255,0.8);
-}
-
-/* Header & Description */
-header h1 {
-    font-size: 2.2em;
-    color: var(--text-main);
-    margin-bottom: 5px;
+.hero h1 {
+    font-size: 1.65em;
     font-weight: 800;
-    letter-spacing: -1px;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin: 0 0 8px;
 }
-
-.description {
-    background-color: #f8f9fa;
-    color: var(--text-sub);
-    padding: 20px;
-    margin: 30px 0 40px;
-    border-radius: 12px;
+.hero-subtitle {
     font-size: 0.95em;
     font-weight: 500;
-    line-height: 1.6;
-    text-align: left;
-    border-left: 4px solid var(--primary-color);
-}
-.description p { margin: 0; }
-
-/* Search Form */
-.custom-search-form { display: flex; justify-content: center; margin-bottom: 30px; }
-.custom-search-form input[type="text"] {
-    padding: 16px 20px;
-    width: 70%;
-    border: 2px solid var(--border-color);
-    border-right: none;
-    border-radius: 12px 0 0 12px;
-    font-size: 1.1em;
-    outline: none;
-    transition: 0.3s;
-    background-color: #fff;
-    color: var(--text-main);
-}
-.custom-search-form input[type="text"]:focus { border-color: var(--primary-color); }
-.custom-search-form button {
-    padding: 16px 24px;
-    background: var(--primary-gradient);
-    color: white;
-    border: none;
-    border-radius: 0 12px 12px 0;
-    font-size: 1.1em;
-    font-weight: 700;
-    cursor: pointer;
-    transition: 0.3s;
-    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
-}
-.custom-search-form button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+    line-height: 1.55;
+    color: var(--text-secondary);
+    margin: 0 auto;
+    max-width: 300px;
 }
 
-/* 광고 배너 스타일 */
-.ad-banner-wrapper {
-    margin-top: 30px;
-    margin-bottom: 10px;
-}
-.ad-banner-link {
+.search-bar {
     display: flex;
     align-items: center;
-    background: linear-gradient(to right, #ffffff, #f8f9fa);
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 15px;
+    gap: 8px;
+    background: var(--bg);
+    border: 1.5px solid transparent;
+    border-radius: 999px;
+    padding: 4px 6px 4px 18px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.search-bar:focus-within {
+    background: var(--surface);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12);
+}
+.search-icon { color: var(--text-tertiary); flex-shrink: 0; }
+.search-bar input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: inherit;
+    font-size: 1.05em;
+    padding: 14px 2px;
+    color: var(--text-primary);
+}
+.search-bar input::placeholder { color: var(--text-tertiary); }
+.search-bar button {
+    flex-shrink: 0;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.95em;
+    padding: 12px 22px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.search-bar button:hover { background: var(--accent-hover); }
+.search-bar button:active { transform: scale(0.96); }
+
+.hint {
+    text-align: center;
+    font-size: 0.8em;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    margin: 16px 0 0;
+}
+
+/* ============================================
+   Ad card
+   ============================================ */
+.ad-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
     text-decoration: none;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
-.ad-banner-link:hover {
+.ad-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.06);
-    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border);
 }
-.ad-banner-img {
-    width: 50px;
-    height: 50px;
+.ad-icon {
+    width: 44px;
+    height: 44px;
     object-fit: contain;
-    margin-right: 15px;
-    border-radius: 8px;
+    border-radius: 12px;
+    background: var(--bg);
+    flex-shrink: 0;
 }
-.ad-banner-text {
+.ad-text {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
+    gap: 2px;
     text-align: left;
 }
-.ad-title {
-    font-size: 0.95em;
-    font-weight: 700;
-    color: #333;
+.ad-text strong {
+    font-size: 0.92em;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ad-text em {
+    font-style: normal;
+    font-size: 0.8em;
+    color: var(--text-secondary);
+}
+.ad-arrow { color: var(--text-tertiary); flex-shrink: 0; transition: transform 0.15s ease, color 0.15s ease; }
+.ad-card:hover .ad-arrow { transform: translateX(3px); color: var(--accent); }
+
+/* ============================================
+   Footer
+   ============================================ */
+footer {
+    text-align: center;
+    font-size: 0.78em;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    padding: 6px 0 0;
+}
+footer a { color: inherit; text-decoration: none; }
+footer a:hover { color: var(--text-secondary); text-decoration: underline; }
+
+/* ============================================
+   Modal (검색 결과 중복 곡 선택 팝업)
+   ============================================ */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    padding: 20px;
+}
+#selection-modal { z-index: 2000; }
+.modal-content {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: 28px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    width: 100%;
+    max-width: 420px;
+    max-height: 80vh;
+    overflow-y: auto;
+    text-align: left;
+}
+.modal-content h3 {
+    font-size: 1.2em;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    margin: 0 0 18px;
+}
+.modal-options { display: flex; flex-direction: column; gap: 8px; }
+.modal-option-item {
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+.modal-option-item:hover {
+    background: rgba(0, 113, 227, 0.08);
+    border-color: rgba(0, 113, 227, 0.25);
+}
+.modal-option-item strong {
+    display: block;
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--text-primary);
     margin-bottom: 2px;
 }
-.ad-desc {
-    font-size: 0.85em;
-    color: #666;
+.modal-option-item span { font-size: 0.85em; color: var(--text-secondary); }
+
+/* ============================================
+   Small screens
+   ============================================ */
+@media (max-width: 420px) {
+    .page { padding: 40px 16px; }
+    .card { padding: 36px 22px 28px; }
 }
-
-footer { font-size: 0.9em; color: #999; font-weight: 500; margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px; line-height: 1.6; }
-footer a { color: #999; text-decoration: none; }
-
-/* Modals (검색 결과 중복 곡 선택 팝업) */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 999; backdrop-filter: blur(5px); }
-#selection-modal { z-index: 2000; }
-.modal-content { background: #ffffff; padding: 35px; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); width: 90%; max-width: 480px; max-height: 85vh; overflow-y: auto; text-align: left; }
-.modal-content h3 { color: var(--text-main); font-size: 1.6em; margin: 0 0 25px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; font-weight: 800; }
-.modal-options { max-height: 300px; overflow-y: auto; }
-.modal-option-item { padding: 15px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: 0.2s; background-color: #fff; }
-.modal-option-item:hover { background-color: #f8f9fa; border-color: var(--primary-color); transform: translateY(-1px); }
-.modal-option-item strong { display: block; font-size: 1.15em; color: var(--text-main); margin-bottom: 4px; }
-.modal-option-item span { font-size: 0.95em; color: #888; }
