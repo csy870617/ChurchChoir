@@ -3,7 +3,7 @@ import { auth } from "./config.js";
 import { closeModalWithHistory, escapeInAppBrowser, toggleCollapsible } from "./utils.js";
 import { searchAndRedirect } from "./search.js";
 import { toggleTheme } from "./theme.js";
-import { openRoomModal, closeRoomModal, createRoom, loginRoom, logoutRoom, inviteMembers, tryAutoLoginFromUrl } from "./auth.js";
+import { openRoomModal, closeRoomModal, createRoom, loginRoom, logoutRoom, inviteMembers, tryAutoLoginFromUrl, tryAutoLoginFromStorage } from "./auth.js";
 import { showWriteForm, showBoardList, savePost, deletePostFromForm, tryEditPost, loadMorePosts } from "./board.js";
 import {
     closeSongModal,
@@ -26,7 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
         console.error("익명 로그인 실패:", e);
     }
-    tryAutoLoginFromUrl();
+    const cameFromInviteLink = await tryAutoLoginFromUrl();
+    if (!cameFromInviteLink) {
+        tryAutoLoginFromStorage();
+    }
 });
 
 // --- 전역 함수 등록 ---

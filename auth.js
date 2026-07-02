@@ -1,4 +1,4 @@
-import { getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDocs, addDoc, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { groupsCollection } from "./config.js";
 import { state } from "./state.js";
 import { hashPassword, openModalWithHistory, closeModalWithHistory, copyToClipboard } from "./utils.js";
@@ -6,6 +6,25 @@ import { loadPosts } from "./board.js";
 import { loadSongs } from "./songs.js";
 
 const SHARE_BASE_URL = 'https://csy870617.github.io/ChurchChoir/';
+const STORAGE_KEY = 'choir_room_credentials';
+
+// 다음 방문 때 자동으로 다시 입장할 수 있도록 저장 (비밀번호는 해시만 저장)
+function saveCredentials(church, choir, pwHash) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ church, choir, pw: pwHash }));
+    } catch (e) {}
+}
+
+function loadCredentials() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+}
+
+function clearCredentials() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+}
 
 export function openRoomModal() {
     document.getElementById('room-church').value = '';
@@ -44,6 +63,8 @@ function applyRoomLogin(roomDoc) {
     document.getElementById('room-title-choir').textContent = roomData.choirName;
     document.getElementById('btn-open-room').style.display = 'none';
     document.getElementById('room-section').style.display = 'block';
+
+    saveCredentials(roomData.churchName, roomData.choirName, roomData.password);
 
     loadPosts();
     loadSongs();
@@ -94,21 +115,38 @@ export async function loginRoom() {
     }
 }
 
-// 초대 링크(?church=...&choir=...&pw=...)로 접속했을 때 자동 입장
+// 초대 링크(?room=<연습실 id>)로 접속했을 때 자동 입장.
+// 반환값은 URL에 초대 파라미터가 있었는지 여부 (있었다면 저장된 정보로 재시도할 필요 없음)
 export async function tryAutoLoginFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    const church = params.get('church');
-    const choir = params.get('choir');
-    const pw = params.get('pw');
-    if (!church || !choir || !pw) return;
+    const roomId = params.get('room');
+    if (!roomId) return false;
 
     // 링크를 다시 열어도 중복 시도되지 않도록 주소창에서 즉시 제거
     history.replaceState({}, document.title, window.location.pathname);
 
     try {
-        const snap = await getDocs(buildRoomQuery(pw, church, choir));
-        if (snap.empty) {
+        const docSnap = await getDoc(doc(groupsCollection, roomId));
+        if (!docSnap.exists()) {
             alert("초대 링크가 유효하지 않습니다. 성가대 대표에게 새 초대 링크를 요청해주세요.");
+            return true;
+        }
+        applyRoomLogin(docSnap);
+    } catch (e) {
+        console.error(e);
+    }
+    return true;
+}
+
+// 이전 방문 때 입장했던 연습실 정보가 저장돼 있으면 다시 물어보지 않고 자동 입장
+export async function tryAutoLoginFromStorage() {
+    const creds = loadCredentials();
+    if (!creds || !creds.church || !creds.choir || !creds.pw) return;
+
+    try {
+        const snap = await getDocs(buildRoomQuery(creds.pw, creds.church, creds.choir));
+        if (snap.empty) {
+            clearCredentials(); // 방이 삭제되었거나 정보가 바뀐 경우 저장된 정보를 정리
             return;
         }
         applyRoomLogin(snap.docs[0]);
@@ -118,13 +156,12 @@ export async function tryAutoLoginFromUrl() {
 }
 
 export async function inviteMembers() {
-    if (!state.currentGroupId || !state.currentChurchName || !state.currentChoirName || !state.currentLoginPw) {
+    if (!state.currentGroupId || !state.currentChurchName || !state.currentChoirName) {
         alert("연습실에 입장한 후 이용해주세요.");
         return;
     }
 
-    const params = `?church=${encodeURIComponent(state.currentChurchName)}&choir=${encodeURIComponent(state.currentChoirName)}&pw=${encodeURIComponent(state.currentLoginPw)}`;
-    const shareUrl = SHARE_BASE_URL + params;
+    const shareUrl = `${SHARE_BASE_URL}?room=${state.currentGroupId}`;
     const title = `[${state.currentChurchName} ${state.currentChoirName}]`;
     const text = '링크를 누르면 자동으로 연습실에 입장돼요.';
 
@@ -147,6 +184,8 @@ export function logoutRoom() {
     state.currentSongId = null;
     state.lastVisiblePost = null;
     state.lastVisibleSong = null;
+
+    clearCredentials();
 
     document.getElementById('room-section').style.display = 'none';
     document.getElementById('btn-open-room').style.display = 'inline-flex';
