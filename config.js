@@ -18,9 +18,6 @@ const auth = getAuth(app);
 
 const groupsCollection = collection(db, "choir_groups");
 const boardCollection = collection(db, "choir_posts");
-const sharedLinksCollection = collection(db, "shared_links");
-const groupLinksCollection = collection(db, "group_links");
-const recurringLinksCollection = collection(db, "recurring_links");
-const weeklyLinksCollection = collection(db, "weekly_links");
+const songsCollection = collection(db, "choir_songs");
 
-export { db, auth, groupsCollection, boardCollection, sharedLinksCollection, groupLinksCollection, recurringLinksCollection, weeklyLinksCollection };
+export { db, auth, groupsCollection, boardCollection, songsCollection };

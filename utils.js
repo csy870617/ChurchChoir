@@ -9,6 +9,92 @@ export function escapeInAppBrowser() {
     }
 }
 
+// HTML 이스케이프 (XSS 방지)
+export function escapeHtml(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// SHA-256 비밀번호 해싱 (Web Crypto API)
+export async function hashPassword(password) {
+    const msgBuffer = new TextEncoder().encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 유튜브 URL 검사 (m.youtube.com, music.youtube.com 등 서브도메인 허용)
+export function isValidYoutubeUrl(url) {
+    if (!url) return false;
+    const regex = /^(https?:\/\/)?([a-z0-9-]+\.)*(youtube\.com|youtu\.be)\/.+$/i;
+    return regex.test(url);
+}
+
+// 중앙아트(joongangart.kr) URL 검사
+export function isValidJoongangArtUrl(url) {
+    if (!url) return false;
+    const regex = /^(https?:\/\/)?([a-z0-9-]+\.)*joongangart\.kr\/.+$/i;
+    return regex.test(url);
+}
+
+// 합창 링크는 유튜브 또는 중앙아트 링크 둘 다 허용
+export function isValidChoirLink(url) {
+    return isValidYoutubeUrl(url) || isValidJoongangArtUrl(url);
+}
+
+// 프로토콜 없는 주소 보정 (window.open이 상대경로로 열리는 문제 방지)
+export function normalizeUrl(url) {
+    if (!url) return url;
+    return /^https?:\/\//i.test(url) ? url : 'https://' + url;
+}
+
+// URL 끝에 붙은 문장부호(마침표, 쉼표, 닫는 괄호 등)는 링크에서 제외하고 본문 텍스트로 되돌림
+// (괄호는 URL 안에 짝이 맞는 여는 괄호가 있으면 보존)
+function trimTrailingPunctuation(url) {
+    let trimmed = url.replace(/[.,!?;:'"]+$/, '');
+    while (trimmed.endsWith(')')) {
+        const openCount = (trimmed.match(/\(/g) || []).length;
+        const closeCount = (trimmed.match(/\)/g) || []).length;
+        if (closeCount > openCount) {
+            trimmed = trimmed.slice(0, -1);
+        } else {
+            break;
+        }
+    }
+    return trimmed;
+}
+
+// 링크 텍스트 변환 (XSS 방지: 텍스트는 이스케이프, URL만 링크로 변환)
+export function convertUrlsToLinks(text) {
+    if (!text) return '';
+    // https?:// 로 시작하는 URL만 허용 (javascript: 등 차단)
+    // 한글(자모/음절)이 공백 없이 바로 이어질 경우 URL이 거기서 끊기도록 제외 (예: "...com입니다")
+    const urlRegex = /\bhttps?:\/\/[^\s"'<>ㄱ-ㆎ가-힣]+/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = urlRegex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+            parts.push(escapeHtml(text.slice(lastIndex, match.index)));
+        }
+        const url = trimTrailingPunctuation(match[0]);
+        parts.push(`<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(url)}</a>`);
+        lastIndex = match.index + url.length;
+    }
+
+    if (lastIndex < text.length) {
+        parts.push(escapeHtml(text.slice(lastIndex)));
+    }
+
+    return parts.join('');
+}
+
 // 모달용 히스토리 항목은 항상 1개만 유지 (중첩 모달 + 연속 닫기 시 뒤로가기 중복 방지)
 let modalStatePushed = false;
 
@@ -44,3 +130,58 @@ window.addEventListener('popstate', () => {
     const modals = document.querySelectorAll('.modal-overlay');
     modals.forEach(el => el.style.display = 'none');
 });
+
+// 우클릭(데스크톱)/롱프레스(모바일)로 항목 관리 동작을 여는 헬퍼
+// 짧은 탭/클릭은 onTap, 길게 누르거나 우클릭하면 onLongPress를 호출한다
+export function bindPressActions(el, { onTap, onLongPress }) {
+    const LONG_PRESS_MS = 550;
+    let pressTimer = null;
+    let longPressFired = false;
+
+    const clearPressTimer = () => {
+        if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    };
+
+    el.addEventListener('touchstart', () => {
+        longPressFired = false;
+        clearPressTimer();
+        pressTimer = setTimeout(() => {
+            longPressFired = true;
+            onLongPress();
+        }, LONG_PRESS_MS);
+    }, { passive: true });
+
+    el.addEventListener('touchmove', clearPressTimer);
+    el.addEventListener('touchend', clearPressTimer);
+    el.addEventListener('touchcancel', clearPressTimer);
+
+    el.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        // 모바일에서 롱프레스로 이미 처리된 제스처는 contextmenu로 중복 실행되지 않도록 방지
+        if (longPressFired) { longPressFired = false; return; }
+        onLongPress();
+    });
+
+    el.addEventListener('click', () => {
+        if (longPressFired) { longPressFired = false; return; }
+        onTap();
+    });
+}
+
+// 선택 사항 섹션(파트별 링크 등)의 펼침 상태를 지정
+export function setCollapsibleState(targetId, btnEl, open) {
+    const target = document.getElementById(targetId);
+    if (target) target.style.display = open ? 'block' : 'none';
+    if (btnEl) {
+        btnEl.classList.toggle('open', open);
+        btnEl.textContent = (open ? '▾' : '▸') + btnEl.textContent.slice(1);
+    }
+}
+
+// 선택 사항 섹션 펼치기/접기 (버튼 클릭용)
+export function toggleCollapsible(targetId, btnEl) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    const willOpen = target.style.display === 'none' || !target.style.display;
+    setCollapsibleState(targetId, btnEl, willOpen);
+}
