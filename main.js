@@ -1,127 +1,15 @@
-import { toggleBoard, toggleIntegrated, closeModalWithHistory, escapeInAppBrowser, toggleCollapsible } from "./utils.js";
-import { state } from "./state.js";
-import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { auth } from "./config.js";
-import { createGroup, boardLogin, boardLogout, inviteMember } from "./auth.js";
-import { showWriteForm, showBoardList, savePost, tryDeletePost, tryEditPost, loadPosts } from "./board.js";
-import {
-    openDirectLink, openSongEditModal, searchGroupLinks, searchSharedLinks, searchJoongangArt, applySharedData, reportSharedLink,
-    saveSongLink, shareSongLink, deleteSongLink, moveSongLink,
-    closeSongModal, closePlayModal, sendErrorReport
-} from "./links.js";
-import { openWeeklyAddModal, saveWeeklySong, deleteWeeklySong, closeWeeklyModal, loadWeeklySongs, searchJoongangArtWeekly } from "./weekly.js";
+import { closeModalWithHistory, escapeInAppBrowser } from "./utils.js";
 import { searchAndRedirect } from "./search.js";
 
-// 카카오톡/네이버/인스타그램 등 인앱 브라우저에서는 로그인·클립보드 기능이 제한될 수 있어 외부 브라우저로 유도
+// 카카오톡/네이버/인스타그램 등 인앱 브라우저에서는 새 탭 열기 등이 제한될 수 있어 외부 브라우저로 유도
 escapeInAppBrowser();
 
 // --- 전역 함수 등록 ---
-window.toggleBoard = toggleBoard;
-window.toggleIntegrated = toggleIntegrated;
-window.createGroup = createGroup;
-window.boardLogin = boardLogin;
-window.boardLogout = boardLogout;
-window.inviteMember = inviteMember;
-window.showWriteForm = showWriteForm;
-window.showBoardList = showBoardList;
-window.savePost = savePost;
-window.tryDeletePost = tryDeletePost;
-window.tryEditPost = tryEditPost;
-window.toggleCollapsible = toggleCollapsible;
-window.openDirectLink = openDirectLink;
-window.openSongEditModal = openSongEditModal;
-window.searchGroupLinks = searchGroupLinks;
-window.searchSharedLinks = searchSharedLinks;
-window.searchJoongangArt = searchJoongangArt;
-window.applySharedData = applySharedData;
-window.reportSharedLink = reportSharedLink;
-window.saveSongLink = saveSongLink;
-window.shareSongLink = shareSongLink;
-window.deleteSongLink = deleteSongLink;
-window.moveSongLink = moveSongLink;
 window.searchAndRedirect = searchAndRedirect;
-window.loadMorePosts = () => loadPosts(true);
 
-window.closePlayModal = closePlayModal;
-window.closeSongModal = closeSongModal;
-window.sendErrorReport = sendErrorReport;
-
-window.openWeeklyAddModal = openWeeklyAddModal;
-window.saveWeeklySong = saveWeeklySong;
-window.deleteWeeklySong = deleteWeeklySong;
-window.closeWeeklyModal = closeWeeklyModal;
-window.loadMoreWeekly = () => loadWeeklySongs(true);
-window.searchJoongangArtWeekly = searchJoongangArtWeekly;
-
-// ✨ 초기화 이벤트 (순서 중요: 인증 -> 로직 실행)
-window.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. 먼저 익명 로그인을 시도합니다.
-    signInAnonymously(auth).then(() => {
-        console.log("Auth Success"); // 인증 성공!
-
-        // 2. 인증이 성공한 후에야 DB 조회(로그인 시도)를 시작합니다.
-        checkAndLogin();
-
-    }).catch((e) => {
-        console.error("Auth Fail", e);
-        alert("서버 연결에 실패했습니다. 인터넷 상태를 확인하거나 새로고침 해주세요.");
-    });
-});
-
-// 키보드 이벤트
+// 키보드 이벤트 (검색 결과 선택 팝업 닫기)
 document.addEventListener('keydown', (e) => {
     if (e.key === "Escape") {
         closeModalWithHistory();
     }
 });
-
-// ✨ 로그인 상태 체크 및 실행 함수 (분리됨)
-function checkAndLogin() {
-    // 1. URL 파라미터 확인 (매직 링크)
-    const urlParams = new URLSearchParams(window.location.search);
-    const linkChurch = urlParams.get('church');
-    const linkPw = urlParams.get('pw');
-
-    if (linkChurch && linkPw) {
-        // 매직 링크 접속 시
-        document.getElementById('login-church').value = linkChurch;
-        document.getElementById('login-pw').value = linkPw;
-        
-        window.isMagicLogin = true; // 경고창 방지 플래그
-
-        // 자동 로그인 시도
-        boardLogin().then(() => {
-            if (state.currentGroupId) {
-                // 성공 시에만 주소창 정리 (실패 시 파라미터를 남겨 재시도 가능)
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } else {
-                alert("초대 링크 로그인에 실패했습니다.\n링크가 만료되었거나 비밀번호가 변경되었을 수 있습니다.");
-            }
-        });
-
-    } else {
-        // 2. 기존 저장된 정보 확인 (일반 접속)
-        let savedLogin = null;
-        try {
-            const remembered = localStorage.getItem('choir_remembered');
-            if (remembered) savedLogin = JSON.parse(remembered);
-        } catch (e) {
-            // 손상된 저장 정보는 초기화 (JSON.parse 실패로 앱 초기화가 중단되는 것 방지)
-            console.error("저장된 로그인 정보가 손상되어 초기화합니다.", e);
-            localStorage.removeItem('choir_remembered');
-            localStorage.removeItem('choir_auto_login');
-        }
-
-        if (savedLogin && typeof savedLogin.name === 'string' && typeof savedLogin.pw === 'string') {
-            document.getElementById('login-church').value = savedLogin.name;
-            document.getElementById('login-pw').value = savedLogin.pw;
-            document.getElementById('remember-me').checked = true;
-
-            if (localStorage.getItem('choir_auto_login') === 'true') {
-                document.getElementById('auto-login').checked = true;
-                boardLogin();
-            }
-        }
-    }
-}
