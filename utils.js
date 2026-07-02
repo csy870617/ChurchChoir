@@ -179,6 +179,24 @@ export function bindPressActions(el, { onTap, onLongPress }) {
     });
 }
 
+// 선택 사항 섹션(파트별 링크, 다른 곳에서 가져오기 등)의 펼침 상태를 지정
+export function setCollapsibleState(targetId, btnEl, open) {
+    const target = document.getElementById(targetId);
+    if (target) target.style.display = open ? 'block' : 'none';
+    if (btnEl) {
+        btnEl.classList.toggle('open', open);
+        btnEl.textContent = (open ? '▾' : '▸') + btnEl.textContent.slice(1);
+    }
+}
+
+// 선택 사항 섹션 펼치기/접기 (버튼 클릭용)
+export function toggleCollapsible(targetId, btnEl) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    const willOpen = target.style.display === 'none' || !target.style.display;
+    setCollapsibleState(targetId, btnEl, willOpen);
+}
+
 // UI 제어
 export function toggleBoard(forceOpen = false, currentGroupId) {
     const wrapper = document.getElementById('integrated-content-wrapper');
