@@ -1,7 +1,7 @@
 import { getDocs, addDoc, deleteDoc, updateDoc, doc, query, where, orderBy, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { songsCollection } from "./config.js";
 import { state } from "./state.js";
-import { isValidChoirLink, normalizeUrl, openModalWithHistory, closeModalWithHistory, bindPressActions, setCollapsibleState, addUrlToHistory, getUrlHistory, addTitleToHistory, getTitleHistory } from "./utils.js";
+import { isValidChoirLink, isValidJoongangArtUrl, normalizeUrl, openModalWithHistory, closeModalWithHistory, bindPressActions, setCollapsibleState, addUrlToHistory, getUrlHistory, addTitleToHistory, getTitleHistory } from "./utils.js";
 import { performSearch } from "./search.js";
 
 const SONGS_PER_PAGE = 10;
@@ -91,7 +91,15 @@ function createSongItem(song) {
     }
 
     bindPressActions(item, {
-        onTap: () => openSongPlayModal(song.id),
+        // 중앙아트 링크는 그 안에서 파트별로 다시 선택할 수 있으므로, 재생 팝업 없이 바로 연결
+        onTap: () => {
+            const urlAll = song.urls ? song.urls.all : null;
+            if (isValidJoongangArtUrl(urlAll)) {
+                window.open(urlAll, '_blank');
+            } else {
+                openSongPlayModal(song.id);
+            }
+        },
         onLongPress: () => openSongEditModal(song.id)
     });
 
