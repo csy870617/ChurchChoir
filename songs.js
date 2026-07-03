@@ -159,7 +159,7 @@ export function openSongEditModal(songId) {
     renderHistoryDatalist('youtube-url-history', getUrlHistory());
     renderHistoryDatalist('song-title-history', getTitleHistory());
 
-    document.getElementById('song-modal-title').textContent = song ? '찬양곡 수정' : '새 찬양곡 추가';
+    document.getElementById('song-modal-title').textContent = song ? '찬양곡 수정' : '찬양곡 추가';
     document.getElementById('song-title').value = song ? song.title : '';
     document.getElementById('song-book').value = song ? (song.bookTitle || '') : '';
     document.getElementById('song-date').value = song ? (song.date || '') : '';

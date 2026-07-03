@@ -474,7 +474,6 @@ textarea.input-full { height: 130px; resize: vertical; line-height: 1.6; }
 .modal-desc { font-size: 0.85em; line-height: 1.6; color: var(--text-secondary); margin: -8px 0 18px; }
 .title-row { display: flex; gap: 8px; margin-bottom: 14px; }
 .title-row > * { flex: 1; min-width: 0; }
-.title-row .title-search-group { flex: 1.6; }
 .input-full-url {
     width: 100%;
     box-sizing: border-box;
@@ -494,8 +493,8 @@ textarea.input-full { height: 130px; resize: vertical; line-height: 1.6; }
 input[type="date"].input-full-url { color-scheme: light; }
 :root[data-theme="dark"] input[type="date"].input-full-url { color-scheme: dark; }
 
-.title-search-group { display: flex; gap: 6px; min-width: 0; }
-.title-search-group .input-full-url { flex: 1; min-width: 0; }
+.title-search-group { display: flex; gap: 6px; min-width: 0; margin-bottom: 10px; }
+.title-search-group .input-full-url { flex: 1; min-width: 0; margin-bottom: 0; }
 .btn-inline-search {
     flex-shrink: 0;
     width: 40px;
@@ -511,7 +510,19 @@ input[type="date"].input-full-url { color-scheme: light; }
 }
 .btn-inline-search:hover { background: var(--surface); border-color: var(--border-strong); color: var(--text-primary); }
 
+.date-field { position: relative; flex: 1; min-width: 0; }
+.date-field-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    pointer-events: none;
+}
+.date-field input[type="date"].input-full-url { padding-left: 34px; }
+
 .link-method-block { margin-bottom: 8px; }
+.link-method-label { margin: 0 0 8px; font-size: 0.88em; font-weight: 700; color: var(--text-primary); }
 .link-method-divider { display: flex; align-items: center; text-align: center; color: var(--text-tertiary); font-size: 0.78em; margin: 6px 0 14px; }
 .link-method-divider::before, .link-method-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
 .link-method-divider span { padding: 0 10px; }
