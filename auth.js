@@ -186,7 +186,6 @@ export function logoutRoom() {
     state.currentLoginPw = null;
     state.currentSongId = null;
     state.lastVisiblePost = null;
-    state.lastVisibleSong = null;
 
     clearCredentials();
 

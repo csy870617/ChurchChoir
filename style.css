@@ -457,6 +457,16 @@ textarea.input-full { height: 130px; resize: vertical; line-height: 1.6; }
     -webkit-touch-callout: none;
 }
 .song-item:hover { border-color: rgba(10, 132, 255, 0.5); background: rgba(10, 132, 255, 0.08); }
+.song-item-date {
+    align-self: flex-start;
+    font-size: 0.72em;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(10, 132, 255, 0.12);
+    border-radius: 6px;
+    padding: 2px 7px;
+    margin-bottom: 4px;
+}
 .song-item-title { font-size: 0.95em; font-weight: 700; color: var(--text-primary); }
 .song-item-book { font-size: 0.78em; color: var(--accent); margin-top: 2px; }
 
@@ -480,6 +490,8 @@ textarea.input-full { height: 130px; resize: vertical; line-height: 1.6; }
 .input-full-url:focus { outline: none; border-color: rgba(10, 132, 255, 0.55); background: var(--surface); }
 .title-row .input-full-url { margin-bottom: 0; }
 .input-part { font-size: 0.9em; }
+input[type="date"].input-full-url { color-scheme: light; }
+:root[data-theme="dark"] input[type="date"].input-full-url { color-scheme: dark; }
 
 .title-search-group { display: flex; gap: 6px; min-width: 0; }
 .title-search-group .input-full-url { flex: 1; min-width: 0; }
