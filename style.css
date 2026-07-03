@@ -104,9 +104,9 @@ body::before {
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: 420px;
+    max-width: clamp(420px, 60vw, 760px);
     margin: 0 auto;
-    padding: 88px 24px 48px;
+    padding: 88px clamp(24px, 4vw, 56px) 48px;
 }
 
 /* ============================================
