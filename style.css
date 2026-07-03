@@ -106,7 +106,7 @@ body::before {
     width: 100%;
     max-width: clamp(420px, 60vw, 760px);
     margin: 0 auto;
-    padding: 88px clamp(24px, 4vw, 56px) 48px;
+    padding: 88px clamp(14px, 2.5vw, 36px) 48px;
 }
 
 /* ============================================
@@ -660,7 +660,7 @@ input[type="date"].input-full-url { color-scheme: light; }
    Small screens
    ============================================ */
 @media (max-width: 420px) {
-    .page { padding: 64px 20px 40px; }
+    .page { padding: 64px 14px 40px; }
     .write-row { flex-direction: column; }
     .title-row { flex-direction: column; }
 }
