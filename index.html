@@ -165,7 +165,7 @@
 
             <div class="link-method-block">
                 <div class="link-action-search">
-                    <input type="text" id="song-joongang-search-input" placeholder="찬양곡 제목 검색" onkeydown="if(event.key === 'Enter') { event.preventDefault(); searchJoongangArt(); }">
+                    <input type="text" id="song-joongang-search-input" placeholder="중앙아트 찬양곡 검색" onkeydown="if(event.key === 'Enter') { event.preventDefault(); searchJoongangArt(); }">
                     <button type="button" onclick="searchJoongangArt()">검색</button>
                 </div>
                 <div id="song-joongang-search-msg" class="search-msg" style="display: none;"></div>
@@ -173,13 +173,13 @@
 
             <div class="link-method-divider"><span>또는</span></div>
 
-            <div class="link-method-block">
-                <input type="text" id="song-url-all" class="input-full-url" list="youtube-url-history" placeholder="유튜브 링크 직접 붙여넣기">
+            <div class="title-row">
+                <input type="text" id="song-title" class="input-full-url" list="song-title-history" placeholder="곡 제목 (필수)">
+                <input type="text" id="song-book" class="input-full-url" placeholder="책 제목">
             </div>
 
-            <div class="title-row">
-                <input type="text" id="song-title" class="input-full-url" placeholder="곡 제목 (필수)">
-                <input type="text" id="song-book" class="input-full-url" placeholder="책 제목">
+            <div class="link-method-block">
+                <input type="text" id="song-url-all" class="input-full-url" list="youtube-url-history" placeholder="유튜브 링크 직접 붙여넣기">
             </div>
 
             <button type="button" id="btn-toggle-parts" class="btn-toggle-section" onclick="toggleCollapsible('song-part-inputs', this)">▸ 파트별 링크 추가하기 (선택)</button>
@@ -192,6 +192,7 @@
             </div>
 
             <datalist id="youtube-url-history"></datalist>
+            <datalist id="song-title-history"></datalist>
 
             <div class="modal-footer-row">
                 <div class="left-group">
