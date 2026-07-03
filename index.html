@@ -86,7 +86,7 @@
             <div class="board-block">
                 <div class="board-block-header">
                     <h3>공지사항</h3>
-                    <button type="button" id="btn-show-write" class="btn-write" onclick="showWriteForm()">✏️ 글쓰기</button>
+                    <button type="button" id="btn-show-write" class="btn-write" onclick="showWriteForm()" aria-label="글쓰기">✏️</button>
                 </div>
 
                 <div id="board-list">
@@ -163,36 +163,35 @@
         <div class="modal-content">
             <h3 id="song-modal-title">새 찬양곡 추가</h3>
 
-            <div class="title-row">
-                <input type="text" id="song-title" class="input-full-url" placeholder="곡 제목 (필수)">
-                <input type="text" id="song-book" class="input-full-url" placeholder="책 제목">
-            </div>
-
             <div class="link-method-block">
-                <p class="link-method-label">🔎 방법 1. 중앙아트에서 찾기</p>
                 <div class="link-action-search">
                     <input type="text" id="song-joongang-search-input" placeholder="찬양곡 제목 검색" onkeydown="if(event.key === 'Enter') { event.preventDefault(); searchJoongangArt(); }">
                     <button type="button" onclick="searchJoongangArt()">검색</button>
                 </div>
                 <div id="song-joongang-search-msg" class="search-msg" style="display: none;"></div>
-                <p class="section-hint">검색 결과를 선택하면 제목·책 제목·합창 링크가 자동으로 채워져요.</p>
             </div>
 
             <div class="link-method-divider"><span>또는</span></div>
 
             <div class="link-method-block">
-                <p class="link-method-label">▶️ 방법 2. 유튜브 링크 붙여넣기</p>
-                <input type="text" id="song-url-all" class="input-full-url" placeholder="유튜브 링크 붙여넣기">
+                <input type="text" id="song-url-all" class="input-full-url" list="youtube-url-history" placeholder="유튜브 링크 직접 붙여넣기">
+            </div>
+
+            <div class="title-row">
+                <input type="text" id="song-title" class="input-full-url" placeholder="곡 제목 (필수)">
+                <input type="text" id="song-book" class="input-full-url" placeholder="책 제목">
             </div>
 
             <button type="button" id="btn-toggle-parts" class="btn-toggle-section" onclick="toggleCollapsible('song-part-inputs', this)">▸ 파트별 링크 추가하기 (선택)</button>
             <div id="song-part-inputs" style="display: none;">
                 <p class="section-hint">소프라노·알토·테너·베이스를 따로 듣고 싶을 때만 채워주세요.</p>
-                <input type="text" id="song-url-sop" class="input-full-url input-part" placeholder="소프라노 링크">
-                <input type="text" id="song-url-alt" class="input-full-url input-part" placeholder="알토 링크">
-                <input type="text" id="song-url-ten" class="input-full-url input-part" placeholder="테너 링크">
-                <input type="text" id="song-url-bas" class="input-full-url input-part" placeholder="베이스 링크">
+                <input type="text" id="song-url-sop" class="input-full-url input-part" list="youtube-url-history" placeholder="소프라노 링크">
+                <input type="text" id="song-url-alt" class="input-full-url input-part" list="youtube-url-history" placeholder="알토 링크">
+                <input type="text" id="song-url-ten" class="input-full-url input-part" list="youtube-url-history" placeholder="테너 링크">
+                <input type="text" id="song-url-bas" class="input-full-url input-part" list="youtube-url-history" placeholder="베이스 링크">
             </div>
+
+            <datalist id="youtube-url-history"></datalist>
 
             <div class="modal-footer-row">
                 <div class="left-group">
