@@ -1,7 +1,7 @@
 import { getDocs, addDoc, deleteDoc, updateDoc, doc, query, where, orderBy, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { songsCollection } from "./config.js";
 import { state } from "./state.js";
-import { isValidChoirLink, normalizeUrl, openModalWithHistory, closeModalWithHistory, bindPressActions, setCollapsibleState } from "./utils.js";
+import { isValidChoirLink, normalizeUrl, openModalWithHistory, closeModalWithHistory, bindPressActions, setCollapsibleState, addUrlToHistory, getUrlHistory } from "./utils.js";
 import { performSearch } from "./search.js";
 
 const SONGS_PER_PAGE = 10;
@@ -128,10 +128,24 @@ export function openDirectLink(part) {
     }
 }
 
+// 이전에 입력했던 유튜브 링크를 datalist에 채워 넣어, 입력 필드에서 바로 불러올 수 있게 함
+function renderUrlHistoryDatalist() {
+    const datalist = document.getElementById('youtube-url-history');
+    if (!datalist) return;
+    datalist.innerHTML = '';
+    getUrlHistory().forEach(url => {
+        const option = document.createElement('option');
+        option.value = url;
+        datalist.appendChild(option);
+    });
+}
+
 // --- 찬양곡 등록/수정 모달 ---
 export function openSongEditModal(songId) {
     state.currentSongId = songId || null;
     const song = songId ? currentSongs.find(s => s.id === songId) : null;
+
+    renderUrlHistoryDatalist();
 
     document.getElementById('song-modal-title').textContent = song ? '찬양곡 수정' : '새 찬양곡 추가';
     document.getElementById('song-title').value = song ? song.title : '';
@@ -192,6 +206,8 @@ export async function saveSongLink() {
         alert("저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
         return;
     }
+
+    Object.values(urls).forEach(addUrlToHistory);
 
     closeSongModal();
     await loadSongs();

@@ -106,6 +106,26 @@ export function copyToClipboard(text) {
         .catch(() => prompt("이 링크를 복사해서 공유하세요:", text));
 }
 
+// 이전에 입력했던 유튜브 링크를 기억해두었다가 다음 입력 시 datalist로 불러올 수 있게 함
+const URL_HISTORY_KEY = 'choir_url_history';
+const URL_HISTORY_MAX = 30;
+
+export function addUrlToHistory(url) {
+    if (!url) return;
+    try {
+        const list = getUrlHistory().filter(u => u !== url);
+        list.unshift(url);
+        localStorage.setItem(URL_HISTORY_KEY, JSON.stringify(list.slice(0, URL_HISTORY_MAX)));
+    } catch (e) {}
+}
+
+export function getUrlHistory() {
+    try {
+        const raw = localStorage.getItem(URL_HISTORY_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+}
+
 // 모달용 히스토리 항목은 항상 1개만 유지 (중첩 모달 + 연속 닫기 시 뒤로가기 중복 방지)
 let modalStatePushed = false;
 

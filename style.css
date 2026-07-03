@@ -374,6 +374,14 @@ footer a:hover { color: var(--text-secondary); text-decoration: underline; }
     transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 .btn-write:hover { background: var(--surface); border-color: var(--border-strong); }
+#btn-show-write {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+    font-size: 1.05em;
+    line-height: 1;
+}
 
 .empty-msg { text-align: center; font-size: 0.88em; color: var(--text-tertiary); padding: 32px 10px; font-weight: 500; }
 
@@ -473,7 +481,6 @@ textarea.input-full { height: 130px; resize: vertical; line-height: 1.6; }
 .input-part { font-size: 0.9em; }
 
 .link-method-block { margin-bottom: 8px; }
-.link-method-label { margin: 0 0 8px; font-size: 0.88em; font-weight: 700; color: var(--text-primary); }
 .link-method-divider { display: flex; align-items: center; text-align: center; color: var(--text-tertiary); font-size: 0.78em; margin: 6px 0 14px; }
 .link-method-divider::before, .link-method-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
 .link-method-divider span { padding: 0 10px; }
