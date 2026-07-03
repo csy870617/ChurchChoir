@@ -91,7 +91,11 @@
 
                 <div id="board-list">
                     <div id="post-items"></div>
-                    <button id="btn-load-more" class="btn-load-more" style="display: none;" onclick="loadMorePosts()">더 보기</button>
+                    <div id="board-pagination" class="board-pagination" style="display: none;">
+                        <button type="button" id="btn-prev-page" class="btn-page" onclick="goToPrevPostPage()" aria-label="이전 페이지">‹</button>
+                        <span id="page-indicator" class="page-indicator"></span>
+                        <button type="button" id="btn-next-page" class="btn-page" onclick="goToNextPostPage()" aria-label="다음 페이지">›</button>
+                    </div>
                 </div>
 
                 <div id="board-write" class="write-form" style="display: none;">

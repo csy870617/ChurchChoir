@@ -425,21 +425,35 @@ textarea.input-full { height: 130px; resize: vertical; line-height: 1.6; }
 .btn-cancel:hover { color: var(--text-primary); border-color: var(--border-strong); }
 .btn-danger { background: transparent; color: #ff453a; border: 1px solid rgba(255, 69, 58, 0.4); }
 .btn-danger:hover { background: rgba(255, 69, 58, 0.12); }
-.btn-load-more {
-    width: 100%;
-    margin-top: 10px;
-    padding: 11px;
+/* 공지사항 페이지 넘김 */
+.board-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+.btn-page {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: var(--surface-2);
     color: var(--text-secondary);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 9px;
     font-family: inherit;
-    font-size: 0.88em;
-    font-weight: 600;
+    font-size: 1.2em;
+    line-height: 1;
     cursor: pointer;
     transition: 0.15s;
 }
-.btn-load-more:hover { background: var(--surface); color: var(--text-primary); }
+.btn-page:hover:not(:disabled) { background: var(--surface); color: var(--text-primary); border-color: var(--border-strong); }
+.btn-page:disabled { opacity: 0.35; cursor: default; }
+.page-indicator { font-size: 0.85em; font-weight: 600; color: var(--text-secondary); min-width: 48px; text-align: center; }
 
 /* 찬양곡 목록 */
 .song-list { display: flex; flex-direction: column; gap: 8px; }

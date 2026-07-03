@@ -1,4 +1,4 @@
-import { getDocs, addDoc, deleteDoc, updateDoc, doc, getDoc, query, where, limit, orderBy, startAfter } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDocs, addDoc, deleteDoc, updateDoc, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { boardCollection } from "./config.js";
 import { state } from "./state.js";
 import { convertUrlsToLinks, bindPressActions } from "./utils.js";
@@ -9,63 +9,81 @@ const MAX_TITLE_LENGTH = 100;
 const MAX_AUTHOR_LENGTH = 30;
 const MAX_CONTENT_LENGTH = 2000;
 
-// 공지사항 불러오기 (isMore = true면 '더 보기' 클릭 상황)
-export async function loadPosts(isMore = false) {
+// 현재 연습실의 공지사항 전체 (최신순 정렬). 페이지 넘김은 이 배열을 잘라서 화면에 보여준다.
+let currentPosts = [];
+let currentPage = 1;
+
+// 공지사항 불러오기 (연습실 하나의 공지 수는 많지 않으므로 전체를 불러온 뒤 화면에서 정렬·페이지 처리)
+export async function loadPosts(keepPage = false) {
     const listEl = document.getElementById('post-items');
-    const loadMoreBtn = document.getElementById('btn-load-more');
+    const pagination = document.getElementById('board-pagination');
     if (!state.currentGroupId) return;
 
-    if (!isMore) {
-        listEl.innerHTML = '<div class="empty-msg">불러오는 중...</div>';
-        state.lastVisiblePost = null;
-        loadMoreBtn.style.display = 'none';
-    }
+    listEl.innerHTML = '<div class="empty-msg">불러오는 중...</div>';
+    pagination.style.display = 'none';
+    currentPosts = [];
 
     try {
-        let q;
-        if (isMore && state.lastVisiblePost) {
-            q = query(
-                boardCollection,
-                where("groupId", "==", state.currentGroupId),
-                orderBy("date", "desc"),
-                startAfter(state.lastVisiblePost),
-                limit(POSTS_PER_PAGE)
-            );
-        } else {
-            q = query(
-                boardCollection,
-                where("groupId", "==", state.currentGroupId),
-                orderBy("date", "desc"),
-                limit(POSTS_PER_PAGE)
-            );
-        }
-
+        const q = query(boardCollection, where("groupId", "==", state.currentGroupId));
         const snap = await getDocs(q);
-        if (!isMore) listEl.innerHTML = '';
 
         if (snap.empty) {
-            loadMoreBtn.style.display = 'none';
-            if (!isMore) listEl.innerHTML = '<div class="empty-msg">등록된 공지사항이 없습니다.</div>';
+            listEl.innerHTML = '<div class="empty-msg">등록된 공지사항이 없습니다.</div>';
             return;
         }
 
-        state.lastVisiblePost = snap.docs[snap.docs.length - 1];
-        loadMoreBtn.style.display = snap.docs.length < POSTS_PER_PAGE ? 'none' : 'block';
-
         snap.forEach((docSnap) => {
-            const post = { id: docSnap.id, ...docSnap.data() };
-            listEl.appendChild(createPostCard(post));
+            currentPosts.push({ id: docSnap.id, ...docSnap.data() });
         });
+        // 최신 작성일이 위로 오도록 정렬
+        currentPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        const totalPages = Math.max(1, Math.ceil(currentPosts.length / POSTS_PER_PAGE));
+        if (!keepPage || currentPage > totalPages) currentPage = 1;
+        renderPostPage();
     } catch (e) {
         console.error(e);
-        if (e.code === 'failed-precondition') {
-            console.log("Firestore 색인이 필요합니다. 콘솔의 링크를 확인하세요.");
-        }
-        if (!isMore) listEl.innerHTML = '<div class="empty-msg">데이터 로딩 실패.<br>(관리자가 콘솔을 확인해주세요)</div>';
+        listEl.innerHTML = '<div class="empty-msg">데이터 로딩 실패.<br>(관리자가 콘솔을 확인해주세요)</div>';
     }
 }
 
-export function loadMorePosts() { loadPosts(true); }
+// 현재 페이지에 해당하는 공지 목록과 페이지 이동 컨트롤을 그린다
+function renderPostPage() {
+    const listEl = document.getElementById('post-items');
+    const pagination = document.getElementById('board-pagination');
+    const indicator = document.getElementById('page-indicator');
+    const prevBtn = document.getElementById('btn-prev-page');
+    const nextBtn = document.getElementById('btn-next-page');
+
+    const totalPages = Math.max(1, Math.ceil(currentPosts.length / POSTS_PER_PAGE));
+    if (currentPage < 1) currentPage = 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * POSTS_PER_PAGE;
+    const pagePosts = currentPosts.slice(start, start + POSTS_PER_PAGE);
+
+    listEl.innerHTML = '';
+    pagePosts.forEach(post => listEl.appendChild(createPostCard(post)));
+
+    // 공지가 한 페이지 안에 다 들어가면 페이지 넘김 버튼을 숨긴다
+    if (totalPages <= 1) {
+        pagination.style.display = 'none';
+        return;
+    }
+    pagination.style.display = 'flex';
+    indicator.textContent = `${currentPage} / ${totalPages}`;
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = currentPage >= totalPages;
+}
+
+export function goToPrevPostPage() {
+    if (currentPage > 1) { currentPage--; renderPostPage(); }
+}
+
+export function goToNextPostPage() {
+    const totalPages = Math.max(1, Math.ceil(currentPosts.length / POSTS_PER_PAGE));
+    if (currentPage < totalPages) { currentPage++; renderPostPage(); }
+}
 
 // DOM API로 게시글 카드 생성 (innerHTML XSS 차단). 버튼 없이 내용만 깔끔하게 보여주고,
 // 길게 누르거나 우클릭하면 수정 화면(삭제 포함)이 열린다.
@@ -124,7 +142,7 @@ export function showBoardList() {
     document.getElementById('board-write').style.display = 'none';
     document.getElementById('board-list').style.display = 'block';
     document.getElementById('btn-show-write').style.display = 'inline-flex';
-    loadPosts(false);
+    loadPosts(true); // 수정·삭제 후 보던 페이지를 유지
 }
 
 export async function savePost() {
@@ -150,6 +168,7 @@ export async function savePost() {
                 author,
                 date: new Date().toISOString()
             });
+            currentPage = 1; // 새 공지는 맨 앞(첫 페이지)에 오므로 첫 페이지로 이동
         }
         showBoardList();
     } catch (e) { console.error(e); alert("저장 중 오류가 발생했습니다."); }
