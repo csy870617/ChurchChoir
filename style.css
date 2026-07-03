@@ -474,6 +474,7 @@ textarea.input-full { height: 130px; resize: vertical; line-height: 1.6; }
 .modal-desc { font-size: 0.85em; line-height: 1.6; color: var(--text-secondary); margin: -8px 0 18px; }
 .title-row { display: flex; gap: 8px; margin-bottom: 14px; }
 .title-row > * { flex: 1; min-width: 0; }
+.title-row .title-search-group { flex: 1.6; }
 .input-full-url {
     width: 100%;
     box-sizing: border-box;

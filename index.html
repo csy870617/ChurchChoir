@@ -174,7 +174,7 @@
 
             <div class="title-row">
                 <div class="title-search-group">
-                    <input type="text" id="song-title" class="input-full-url" list="song-title-history" placeholder="곡 제목*" onkeydown="if(event.key === 'Enter') { event.preventDefault(); searchMySongs(); }">
+                    <input type="text" id="song-title" class="input-full-url" list="song-title-history" placeholder="곡 제목(필수)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); searchMySongs(); }">
                     <button type="button" class="btn-inline-search" onclick="searchMySongs()" aria-label="예전에 등록한 곡 검색">
                         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                             <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm9 2-5.2-5.2"/>
@@ -188,12 +188,11 @@
             <input type="date" id="song-date" class="input-full-url" aria-label="부를 날짜">
 
             <div class="link-method-block">
-                <input type="text" id="song-url-all" class="input-full-url" list="youtube-url-history" placeholder="유튜브 링크 직접 붙여넣기">
+                <input type="text" id="song-url-all" class="input-full-url" list="youtube-url-history" placeholder="유튜브 링크(합창) 직접 붙여넣기">
             </div>
 
             <button type="button" id="btn-toggle-parts" class="btn-toggle-section" onclick="toggleCollapsible('song-part-inputs', this)">▸ 파트별 링크 추가하기 (선택)</button>
             <div id="song-part-inputs" style="display: none;">
-                <p class="section-hint">소프라노·알토·테너·베이스를 따로 듣고 싶을 때만 채워주세요.</p>
                 <input type="text" id="song-url-sop" class="input-full-url input-part" list="youtube-url-history" placeholder="소프라노 링크">
                 <input type="text" id="song-url-alt" class="input-full-url input-part" list="youtube-url-history" placeholder="알토 링크">
                 <input type="text" id="song-url-ten" class="input-full-url input-part" list="youtube-url-history" placeholder="테너 링크">
