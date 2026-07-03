@@ -495,6 +495,34 @@ input[type="date"].input-full-url { color-scheme: light; }
 
 .title-search-group { display: flex; gap: 6px; min-width: 0; margin-bottom: 10px; }
 .title-search-group .input-full-url { flex: 1; min-width: 0; margin-bottom: 0; }
+
+/* 이전 입력 기록 자동완성 (datalist 대신 직접 구현 — 사파리 호환) */
+.autocomplete-wrapper { position: relative; flex: 1; min-width: 0; }
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin-top: 4px;
+    max-height: 220px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+.autocomplete-item {
+    padding: 10px 12px;
+    font-size: 0.9em;
+    color: var(--text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.autocomplete-item:hover { background: rgba(10, 132, 255, 0.12); }
+.autocomplete-item + .autocomplete-item { border-top: 1px solid var(--border); }
 .btn-inline-search {
     flex-shrink: 0;
     width: 40px;

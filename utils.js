@@ -106,7 +106,7 @@ export function copyToClipboard(text) {
         .catch(() => prompt("이 링크를 복사해서 공유하세요:", text));
 }
 
-// 이전에 입력했던 유튜브 링크를 기억해두었다가 다음 입력 시 datalist로 불러올 수 있게 함
+// 이전에 입력했던 유튜브 링크를 기억해두었다가 다음 입력 시 자동완성으로 불러올 수 있게 함
 const URL_HISTORY_KEY = 'choir_url_history';
 const URL_HISTORY_MAX = 30;
 
@@ -126,7 +126,7 @@ export function getUrlHistory() {
     } catch (e) { return []; }
 }
 
-// 이전에 입력했던 곡 제목을 기억해두었다가 다음 입력 시 datalist로 불러올 수 있게 함
+// 이전에 입력했던 곡 제목을 기억해두었다가 다음 입력 시 자동완성으로 불러올 수 있게 함
 const TITLE_HISTORY_KEY = 'choir_title_history';
 const TITLE_HISTORY_MAX = 30;
 
@@ -144,6 +144,55 @@ export function getTitleHistory() {
         const raw = localStorage.getItem(TITLE_HISTORY_KEY);
         return raw ? JSON.parse(raw) : [];
     } catch (e) { return []; }
+}
+
+// 입력란에 이전 기록 자동완성 드롭다운을 붙인다.
+// 네이티브 <datalist>는 사파리(iOS 포함)에서 지원되지 않아 선택해도 값이 채워지지 않는 문제가 있어,
+// 직접 만든 드롭다운으로 모든 브라우저에서 동일하게 동작하도록 한다.
+export function attachAutocomplete(inputEl, getItems) {
+    if (!inputEl || inputEl.dataset.autocompleteAttached) return;
+    inputEl.dataset.autocompleteAttached = 'true';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'autocomplete-wrapper';
+    inputEl.parentElement.insertBefore(wrapper, inputEl);
+    wrapper.appendChild(inputEl);
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'autocomplete-dropdown';
+    dropdown.style.display = 'none';
+    wrapper.appendChild(dropdown);
+
+    function render() {
+        const term = inputEl.value.trim().toLowerCase();
+        const items = getItems().filter(v => !term || v.toLowerCase().includes(term)).slice(0, 8);
+
+        dropdown.innerHTML = '';
+        if (items.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        items.forEach(value => {
+            const item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            item.textContent = value;
+            // blur보다 먼저 실행되도록 mousedown 단계에서 선택을 처리
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                inputEl.value = value;
+                dropdown.style.display = 'none';
+            });
+            dropdown.appendChild(item);
+        });
+        dropdown.style.display = 'block';
+    }
+
+    inputEl.addEventListener('focus', render);
+    inputEl.addEventListener('input', render);
+    inputEl.addEventListener('blur', () => {
+        setTimeout(() => { dropdown.style.display = 'none'; }, 150);
+    });
 }
 
 // 모달용 히스토리 항목은 항상 1개만 유지 (중첩 모달 + 연속 닫기 시 뒤로가기 중복 방지)
