@@ -14,6 +14,7 @@ import {
     saveSongLink,
     deleteSongLink,
     searchJoongangArt,
+    searchMySongs,
     loadMoreSongs
 } from "./songs.js";
 
@@ -59,6 +60,7 @@ window.openDirectLink = openDirectLink;
 window.saveSongLink = saveSongLink;
 window.deleteSongLink = deleteSongLink;
 window.searchJoongangArt = searchJoongangArt;
+window.searchMySongs = searchMySongs;
 window.loadMoreSongs = loadMoreSongs;
 
 // 키보드 이벤트 (모달 닫기)

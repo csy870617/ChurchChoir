@@ -171,6 +171,10 @@ export function openSongEditModal(songId) {
     msgEl.innerHTML = '';
     msgEl.style.display = 'none';
 
+    const titleSearchMsgEl = document.getElementById('song-title-search-msg');
+    titleSearchMsgEl.innerHTML = '';
+    titleSearchMsgEl.style.display = 'none';
+
     // 파트별 링크가 이미 있으면 펼쳐서 보여주고, 없으면 접어서 폼을 단순하게 유지
     const hasPartLinks = !!(song && song.urls && PART_KEYS.some(p => song.urls[p]));
     setCollapsibleState('song-part-inputs', document.getElementById('btn-toggle-parts'), hasPartLinks);
@@ -306,4 +310,102 @@ function applyJoongangMatch(match) {
 
     const msgEl = document.getElementById('song-joongang-search-msg');
     msgEl.textContent = '✓ 중앙아트 링크가 적용되었습니다. 아래 [저장] 버튼을 눌러주세요.';
+}
+
+// --- 예전에 이 연습실에 등록했던 곡 검색 (곡 제목 입력란의 검색 버튼) ---
+export async function searchMySongs() {
+    const searchInput = document.getElementById('song-title').value.trim();
+    const msgEl = document.getElementById('song-title-search-msg');
+
+    if (!searchInput) {
+        msgEl.textContent = "검색할 곡 제목을 입력해주세요.";
+        msgEl.style.display = 'block';
+        return;
+    }
+    if (!state.currentGroupId) {
+        msgEl.textContent = "연습실에 입장한 후 이용해주세요.";
+        msgEl.style.display = 'block';
+        return;
+    }
+
+    msgEl.textContent = "검색 중...";
+    msgEl.style.display = 'block';
+
+    try {
+        const q = query(songsCollection, where("groupId", "==", state.currentGroupId));
+        const snap = await getDocs(q);
+
+        const normalizedTerm = searchInput.replace(/\s+/g, '').toLowerCase();
+        const matches = [];
+        snap.forEach(docSnap => {
+            const song = { id: docSnap.id, ...docSnap.data() };
+            const normalizedTitle = (song.title || '').replace(/\s+/g, '').toLowerCase();
+            if (normalizedTitle.includes(normalizedTerm)) matches.push(song);
+        });
+
+        if (matches.length === 0) {
+            msgEl.textContent = `"${searchInput}"에 해당하는 예전 곡을 찾을 수 없습니다.`;
+            return;
+        }
+
+        renderMySongResults(matches, msgEl);
+    } catch (e) {
+        console.error(e);
+        msgEl.textContent = "검색 중 오류가 발생했습니다.";
+    }
+}
+
+// DOM API로 검색 결과 렌더링 (innerHTML XSS 방지)
+function renderMySongResults(matches, msgEl) {
+    const container = document.createElement('div');
+    container.className = 'search-result-list';
+
+    matches.forEach(song => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+
+        const info = document.createElement('div');
+        info.className = 'search-result-info';
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'search-result-title';
+        titleSpan.textContent = song.title; // textContent로 XSS 차단
+
+        const bookSpan = document.createElement('span');
+        bookSpan.className = 'search-result-book';
+        bookSpan.textContent = song.bookTitle || '책 제목 없음';
+
+        info.appendChild(titleSpan);
+        info.appendChild(bookSpan);
+
+        const selectBtn = document.createElement('button');
+        selectBtn.type = 'button';
+        selectBtn.className = 'btn-select-data';
+        selectBtn.textContent = '선택';
+        selectBtn.addEventListener('click', () => applyMySongMatch(song));
+
+        item.appendChild(info);
+        item.appendChild(selectBtn);
+        container.appendChild(item);
+    });
+
+    msgEl.innerHTML = '';
+    msgEl.appendChild(container);
+}
+
+function applyMySongMatch(song) {
+    document.getElementById('song-title').value = song.title;
+    document.getElementById('song-book').value = song.bookTitle || '';
+    document.getElementById('song-url-all').value = (song.urls && song.urls.all) || '';
+
+    PART_KEYS.forEach(p => {
+        const el = document.getElementById(`song-url-${p}`);
+        if (el) el.value = (song.urls && song.urls[p]) || '';
+    });
+
+    const hasPartLinks = !!(song.urls && PART_KEYS.some(p => song.urls[p]));
+    setCollapsibleState('song-part-inputs', document.getElementById('btn-toggle-parts'), hasPartLinks);
+
+    const msgEl = document.getElementById('song-title-search-msg');
+    msgEl.textContent = '✓ 예전 곡 정보가 적용되었습니다. 아래 [저장] 버튼을 눌러주세요.';
 }
