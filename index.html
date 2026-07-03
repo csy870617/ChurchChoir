@@ -86,32 +86,37 @@
             <div class="board-block">
                 <div class="board-block-header">
                     <h3>공지사항</h3>
-                    <button type="button" id="btn-show-write" class="btn-write" onclick="showWriteForm()" aria-label="글쓰기">✏️</button>
-                </div>
-
-                <div id="board-list">
-                    <div id="post-items"></div>
-                    <div id="board-pagination" class="board-pagination" style="display: none;">
-                        <button type="button" id="btn-prev-page" class="btn-page" onclick="goToPrevPostPage()" aria-label="이전 페이지">‹</button>
-                        <span id="page-indicator" class="page-indicator"></span>
-                        <button type="button" id="btn-next-page" class="btn-page" onclick="goToNextPostPage()" aria-label="다음 페이지">›</button>
+                    <div class="board-header-actions">
+                        <button type="button" id="btn-show-write" class="btn-write" onclick="showWriteForm()" aria-label="글쓰기">✏️</button>
+                        <button type="button" id="btn-toggle-board" class="btn-write" onclick="toggleBoardCollapse()" aria-label="공지사항 접기/펼치기">▾</button>
                     </div>
                 </div>
 
-                <div id="board-write" class="write-form" style="display: none;">
-                    <input type="hidden" id="edit-mode-id">
-                    <div class="write-row">
-                        <input type="text" id="write-title" class="input-title" placeholder="제목">
-                        <input type="text" id="write-author" class="input-author" placeholder="작성자">
-                    </div>
-                    <textarea id="write-content" class="input-full" placeholder="공지할 내용을 자유롭게 작성하세요"></textarea>
-                    <div class="write-actions">
-                        <div class="left-group">
-                            <button type="button" id="btn-delete-post" class="btn-small btn-danger" style="display: none;" onclick="deletePostFromForm()">삭제</button>
+                <div id="board-content">
+                    <div id="board-list">
+                        <div id="post-items"></div>
+                        <div id="board-pagination" class="board-pagination" style="display: none;">
+                            <button type="button" id="btn-prev-page" class="btn-page" onclick="goToPrevPostPage()" aria-label="이전 페이지">‹</button>
+                            <span id="page-indicator" class="page-indicator"></span>
+                            <button type="button" id="btn-next-page" class="btn-page" onclick="goToNextPostPage()" aria-label="다음 페이지">›</button>
                         </div>
-                        <div class="right-group">
-                            <button type="button" class="btn-small btn-cancel" onclick="showBoardList()">취소</button>
-                            <button type="button" class="btn-small btn-save" onclick="savePost()">등록</button>
+                    </div>
+
+                    <div id="board-write" class="write-form" style="display: none;">
+                        <input type="hidden" id="edit-mode-id">
+                        <div class="write-row">
+                            <input type="text" id="write-title" class="input-title" placeholder="제목">
+                            <input type="text" id="write-author" class="input-author" placeholder="작성자">
+                        </div>
+                        <textarea id="write-content" class="input-full" placeholder="공지할 내용을 자유롭게 작성하세요"></textarea>
+                        <div class="write-actions">
+                            <div class="left-group">
+                                <button type="button" id="btn-delete-post" class="btn-small btn-danger" style="display: none;" onclick="deletePostFromForm()">삭제</button>
+                            </div>
+                            <div class="right-group">
+                                <button type="button" class="btn-small btn-cancel" onclick="showBoardList()">취소</button>
+                                <button type="button" class="btn-small btn-save" onclick="savePost()">등록</button>
+                            </div>
                         </div>
                     </div>
                 </div>

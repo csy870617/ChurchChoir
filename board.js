@@ -13,6 +13,28 @@ const MAX_CONTENT_LENGTH = 2000;
 let currentPosts = [];
 let currentPage = 1;
 
+// --- 공지사항 박스 접기/펼치기 (선택한 상태는 다음 방문에도 유지) ---
+const BOARD_COLLAPSED_KEY = 'choir_board_collapsed';
+
+function setBoardCollapsedUI(collapsed) {
+    const content = document.getElementById('board-content');
+    const btn = document.getElementById('btn-toggle-board');
+    if (content) content.style.display = collapsed ? 'none' : 'block';
+    if (btn) btn.textContent = collapsed ? '▸' : '▾';
+}
+
+export function toggleBoardCollapse() {
+    const content = document.getElementById('board-content');
+    const willCollapse = content.style.display !== 'none';
+    setBoardCollapsedUI(willCollapse);
+    try { localStorage.setItem(BOARD_COLLAPSED_KEY, willCollapse ? '1' : '0'); } catch (e) {}
+}
+
+// 저장된 접힘 상태를 화면에 적용 (모듈 로드 시 1회)
+try {
+    setBoardCollapsedUI(localStorage.getItem(BOARD_COLLAPSED_KEY) === '1');
+} catch (e) {}
+
 // 공지사항 불러오기 (연습실 하나의 공지 수는 많지 않으므로 전체를 불러온 뒤 화면에서 정렬·페이지 처리)
 export async function loadPosts(keepPage = false) {
     const listEl = document.getElementById('post-items');
@@ -130,6 +152,7 @@ function createPostCard(post) {
 }
 
 export function showWriteForm() {
+    setBoardCollapsedUI(false); // 접혀 있어도 글쓰기 화면이 보이도록 펼침 (저장된 접힘 설정은 유지)
     document.getElementById('edit-mode-id').value = '';
     document.getElementById('write-title').value = '';
     document.getElementById('write-content').value = '';

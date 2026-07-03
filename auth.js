@@ -26,10 +26,28 @@ function clearCredentials() {
     try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
 }
 
+// 입력창 자동 채우기용 저장값. [나가기]를 해도 지우지 않아,
+// 다음에 입장할 때 교회 이름·성가대 이름·비밀번호를 다시 입력하지 않아도 된다.
+const PREFILL_KEY = 'choir_room_prefill';
+
+function savePrefill(church, choir, pw) {
+    try {
+        localStorage.setItem(PREFILL_KEY, JSON.stringify({ church, choir, pw }));
+    } catch (e) {}
+}
+
+function loadPrefill() {
+    try {
+        const raw = localStorage.getItem(PREFILL_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+}
+
 export function openRoomModal() {
-    document.getElementById('room-church').value = '';
-    document.getElementById('room-choir').value = '';
-    document.getElementById('room-pw').value = '';
+    const prefill = loadPrefill();
+    document.getElementById('room-church').value = (prefill && prefill.church) || '';
+    document.getElementById('room-choir').value = (prefill && prefill.choir) || '';
+    document.getElementById('room-pw').value = (prefill && prefill.pw) || '';
     openModalWithHistory('room-modal');
 }
 
@@ -96,6 +114,7 @@ export async function createRoom() {
         };
         const docRef = await addDoc(groupsCollection, roomData);
 
+        savePrefill(church, choir, pw);
         applyRoomLogin({ id: docRef.id, data: () => roomData });
         closeRoomModal();
     } catch (e) {
@@ -118,6 +137,7 @@ export async function loginRoom() {
             return;
         }
 
+        savePrefill(church, choir, pw);
         applyRoomLogin(snap.docs[0]);
         closeRoomModal();
     } catch (e) {

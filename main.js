@@ -4,7 +4,7 @@ import { closeModalWithHistory, escapeInAppBrowser, toggleCollapsible } from "./
 import { searchAndRedirect } from "./search.js";
 import { toggleTheme } from "./theme.js";
 import { openRoomModal, closeRoomModal, createRoom, loginRoom, logoutRoom, inviteMembers, tryAutoLoginFromUrl, tryAutoLoginFromStorage } from "./auth.js";
-import { showWriteForm, showBoardList, savePost, deletePostFromForm, tryEditPost, goToPrevPostPage, goToNextPostPage } from "./board.js";
+import { showWriteForm, showBoardList, savePost, deletePostFromForm, tryEditPost, goToPrevPostPage, goToNextPostPage, toggleBoardCollapse } from "./board.js";
 import {
     closeSongModal,
     closePlayModal,
@@ -51,6 +51,7 @@ window.deletePostFromForm = deletePostFromForm;
 window.tryEditPost = tryEditPost;
 window.goToPrevPostPage = goToPrevPostPage;
 window.goToNextPostPage = goToNextPostPage;
+window.toggleBoardCollapse = toggleBoardCollapse;
 
 window.closeSongModal = closeSongModal;
 window.closePlayModal = closePlayModal;
