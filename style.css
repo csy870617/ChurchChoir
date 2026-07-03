@@ -374,7 +374,7 @@ footer a:hover { color: var(--text-secondary); text-decoration: underline; }
     transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 .btn-write:hover { background: var(--surface); border-color: var(--border-strong); }
-#btn-show-write {
+#btn-show-write, #btn-toggle-board {
     width: 34px;
     height: 34px;
     padding: 0;
@@ -382,6 +382,8 @@ footer a:hover { color: var(--text-secondary); text-decoration: underline; }
     font-size: 1.05em;
     line-height: 1;
 }
+#btn-toggle-board { color: var(--text-secondary); }
+.board-header-actions { display: flex; gap: 6px; }
 
 .empty-msg { text-align: center; font-size: 0.88em; color: var(--text-tertiary); padding: 32px 10px; font-weight: 500; }
 
