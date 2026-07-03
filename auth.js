@@ -70,10 +70,16 @@ function applyRoomLogin(roomDoc) {
     loadSongs();
 }
 
+// 생성 처리 중 버튼을 다시 눌러도 연습실이 중복 생성되지 않도록 재진입 차단
+let isCreatingRoom = false;
+
 export async function createRoom() {
+    if (isCreatingRoom) return;
+
     const { church, choir, pw } = readRoomInputs();
     if (!church || !choir || !pw) { alert("교회 이름, 성가대 이름, 비밀번호를 모두 입력해주세요."); return; }
 
+    isCreatingRoom = true;
     try {
         const hashedPw = await hashPassword(pw);
         const snap = await getDocs(buildRoomQuery(hashedPw, church, choir));
@@ -95,6 +101,8 @@ export async function createRoom() {
     } catch (e) {
         console.error(e);
         alert("연습실 생성 중 오류가 발생했습니다.");
+    } finally {
+        isCreatingRoom = false;
     }
 }
 

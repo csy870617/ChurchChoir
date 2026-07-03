@@ -1,7 +1,7 @@
 import { getDocs, addDoc, deleteDoc, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { songsCollection } from "./config.js";
 import { state } from "./state.js";
-import { isValidChoirLink, isValidJoongangArtUrl, normalizeUrl, openModalWithHistory, closeModalWithHistory, bindPressActions, setCollapsibleState, addUrlToHistory, getUrlHistory, addTitleToHistory, getTitleHistory, attachAutocomplete } from "./utils.js";
+import { isValidChoirLink, isValidYoutubeUrl, isValidJoongangArtUrl, normalizeUrl, openModalWithHistory, closeModalWithHistory, bindPressActions, setCollapsibleState, addUrlToHistory, getUrlHistory, addTitleToHistory, getTitleHistory, attachAutocomplete } from "./utils.js";
 import { performSearch } from "./search.js";
 
 const PART_KEYS = ['sop', 'alt', 'ten', 'bas'];
@@ -33,7 +33,10 @@ function sortSongsByClosestDate(songs) {
             return aHasDate ? -1 : 1;
         }
 
-        return new Date(b.createdAt) - new Date(a.createdAt);
+        // createdAt이 없는 옛 데이터는 0(가장 오래됨)으로 간주해 NaN 비교로 인한 순서 불안정을 방지
+        const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bCreated - aCreated;
     });
 }
 
@@ -98,10 +101,12 @@ function createSongItem(song) {
     }
 
     bindPressActions(item, {
-        // 중앙아트 링크는 그 안에서 파트별로 다시 선택할 수 있으므로, 재생 팝업 없이 바로 연결
+        // 중앙아트 링크는 그 안에서 파트별로 다시 선택할 수 있으므로 재생 팝업 없이 바로 연결.
+        // 단, 유튜브 파트 링크가 함께 저장돼 있으면 그 링크에도 접근할 수 있도록 재생 팝업을 띄운다.
         onTap: () => {
             const urlAll = song.urls ? song.urls.all : null;
-            if (isValidJoongangArtUrl(urlAll)) {
+            const hasPartLinks = !!(song.urls && PART_KEYS.some(p => song.urls[p]));
+            if (isValidJoongangArtUrl(urlAll) && !hasPartLinks) {
                 window.open(urlAll, '_blank');
             } else {
                 openSongPlayModal(song.id);
@@ -178,7 +183,11 @@ export function openSongEditModal(songId) {
     openModalWithHistory('song-modal');
 }
 
+// 저장 처리 중 버튼을 다시 눌러도 중복 저장되지 않도록 재진입 차단
+let isSavingSong = false;
+
 export async function saveSongLink() {
+    if (isSavingSong) return;
     if (!state.currentGroupId) { alert("연습실에 입장한 후 이용해주세요."); return; }
 
     const title = document.getElementById('song-title').value.trim();
@@ -191,14 +200,21 @@ export async function saveSongLink() {
     if (!isValidChoirLink(urlAll)) { alert("합창 링크는 유튜브 주소 또는 중앙아트 링크만 가능합니다."); return; }
 
     const urls = { all: urlAll };
-    PART_KEYS.forEach(p => {
+    const partLabels = { sop: '소프라노', alt: '알토', ten: '테너', bas: '베이스' };
+    for (const p of PART_KEYS) {
         const el = document.getElementById(`song-url-${p}`);
         const url = el ? normalizeUrl(el.value.trim()) : '';
-        if (url) urls[p] = url;
-    });
+        if (!url) continue;
+        if (!isValidYoutubeUrl(url)) {
+            alert(`${partLabels[p]} 링크는 유튜브 주소만 가능합니다.`);
+            return;
+        }
+        urls[p] = url;
+    }
 
     const songId = state.currentSongId;
 
+    isSavingSong = true;
     try {
         if (songId) {
             await updateDoc(doc(songsCollection, songId), { title, bookTitle, date, urls });
@@ -213,6 +229,8 @@ export async function saveSongLink() {
         console.error(e);
         alert("저장 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.");
         return;
+    } finally {
+        isSavingSong = false;
     }
 
     Object.values(urls).forEach(addUrlToHistory);

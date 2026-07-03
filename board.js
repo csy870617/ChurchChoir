@@ -39,7 +39,9 @@ export async function loadPosts(keepPage = false) {
         currentPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         const totalPages = Math.max(1, Math.ceil(currentPosts.length / POSTS_PER_PAGE));
-        if (!keepPage || currentPage > totalPages) currentPage = 1;
+        if (!keepPage) currentPage = 1;
+        // 마지막 페이지의 글을 지워 페이지 수가 줄었으면 1페이지가 아니라 마지막 페이지로 보정
+        else if (currentPage > totalPages) currentPage = totalPages;
         renderPostPage();
     } catch (e) {
         console.error(e);
@@ -145,7 +147,12 @@ export function showBoardList() {
     loadPosts(true); // 수정·삭제 후 보던 페이지를 유지
 }
 
+// 저장 처리 중 버튼을 다시 눌러도 중복 등록되지 않도록 재진입 차단
+let isSavingPost = false;
+
 export async function savePost() {
+    if (isSavingPost) return;
+
     const id = document.getElementById('edit-mode-id').value;
     const title = document.getElementById('write-title').value.trim();
     const content = document.getElementById('write-content').value.trim();
@@ -156,6 +163,7 @@ export async function savePost() {
     if (author.length > MAX_AUTHOR_LENGTH) { alert(`작성자는 ${MAX_AUTHOR_LENGTH}자 이하로 입력해주세요.`); return; }
     if (content.length > MAX_CONTENT_LENGTH) { alert(`내용은 ${MAX_CONTENT_LENGTH}자 이하로 입력해주세요.`); return; }
 
+    isSavingPost = true;
     try {
         if (id) {
             // 수정 시에는 작성일(date)·groupId를 덮어쓰지 않고 내용만 갱신
@@ -172,6 +180,7 @@ export async function savePost() {
         }
         showBoardList();
     } catch (e) { console.error(e); alert("저장 중 오류가 발생했습니다."); }
+    finally { isSavingPost = false; }
 }
 
 export async function tryEditPost(id) {
