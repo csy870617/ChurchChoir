@@ -1,11 +1,11 @@
-import { getDocs, addDoc, deleteDoc, updateDoc, doc, query, where, orderBy, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDocs, addDoc, deleteDoc, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { songsCollection } from "./config.js";
 import { state } from "./state.js";
 import { isValidChoirLink, isValidJoongangArtUrl, normalizeUrl, openModalWithHistory, closeModalWithHistory, bindPressActions, setCollapsibleState, addUrlToHistory, getUrlHistory, addTitleToHistory, getTitleHistory } from "./utils.js";
 import { performSearch } from "./search.js";
 
-const SONGS_PER_PAGE = 10;
 const PART_KEYS = ['sop', 'alt', 'ten', 'bas'];
+const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 // 현재 화면에 불러온 곡 목록 (재생/수정 모달을 열 때 재조회 없이 참조)
 let currentSongs = [];
@@ -13,70 +13,73 @@ let currentSongs = [];
 export function closeSongModal() { closeModalWithHistory(); }
 export function closePlayModal() { closeModalWithHistory(); }
 
-// 찬양곡 목록 불러오기 (isMore = true면 '더 보기' 클릭 상황)
-export async function loadSongs(isMore = false) {
-    const listEl = document.getElementById('song-list');
-    const loadMoreBtn = document.getElementById('btn-load-more-songs');
-    if (!state.currentGroupId) return;
+// 부를 날짜가 있는 곡은 오늘과 가까운 순서로, 날짜가 없는 곡은 최근 등록순으로 맨 아래에 배치
+function sortSongsByClosestDate(songs) {
+    const todayMs = new Date().setHours(0, 0, 0, 0);
 
-    if (!isMore) {
-        listEl.innerHTML = '<div class="empty-msg">불러오는 중...</div>';
-        state.lastVisibleSong = null;
-        loadMoreBtn.style.display = 'none';
-        currentSongs = [];
-    }
+    songs.sort((a, b) => {
+        const aHasDate = !!a.date;
+        const bHasDate = !!b.date;
 
-    try {
-        let q;
-        if (isMore && state.lastVisibleSong) {
-            q = query(
-                songsCollection,
-                where("groupId", "==", state.currentGroupId),
-                orderBy("createdAt", "desc"),
-                startAfter(state.lastVisibleSong),
-                limit(SONGS_PER_PAGE)
-            );
-        } else {
-            q = query(
-                songsCollection,
-                where("groupId", "==", state.currentGroupId),
-                orderBy("createdAt", "desc"),
-                limit(SONGS_PER_PAGE)
-            );
+        if (aHasDate && bHasDate) {
+            const diffA = Math.abs(new Date(a.date + 'T00:00:00').getTime() - todayMs);
+            const diffB = Math.abs(new Date(b.date + 'T00:00:00').getTime() - todayMs);
+            if (diffA !== diffB) return diffA - diffB;
+        } else if (aHasDate !== bHasDate) {
+            return aHasDate ? -1 : 1;
         }
 
+        return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+}
+
+// 찬양곡 목록 불러오기 (연습실 하나의 곡 수는 많지 않으므로 전체를 불러온 뒤 화면에서 정렬)
+export async function loadSongs() {
+    const listEl = document.getElementById('song-list');
+    if (!state.currentGroupId) return;
+
+    listEl.innerHTML = '<div class="empty-msg">불러오는 중...</div>';
+    currentSongs = [];
+
+    try {
+        const q = query(songsCollection, where("groupId", "==", state.currentGroupId));
         const snap = await getDocs(q);
-        if (!isMore) listEl.innerHTML = '';
 
         if (snap.empty) {
-            loadMoreBtn.style.display = 'none';
-            if (!isMore) listEl.innerHTML = '<div class="empty-msg">등록된 찬양곡이 없습니다.<br>위 [＋ 곡 추가]로 등록해보세요.</div>';
+            listEl.innerHTML = '<div class="empty-msg">등록된 찬양곡이 없습니다.<br>위 [＋ 곡 추가]로 등록해보세요.</div>';
             return;
         }
 
-        state.lastVisibleSong = snap.docs[snap.docs.length - 1];
-        loadMoreBtn.style.display = snap.docs.length < SONGS_PER_PAGE ? 'none' : 'block';
-
         snap.forEach((docSnap) => {
-            const song = { id: docSnap.id, ...docSnap.data() };
-            currentSongs.push(song);
-            listEl.appendChild(createSongItem(song));
+            currentSongs.push({ id: docSnap.id, ...docSnap.data() });
         });
+        sortSongsByClosestDate(currentSongs);
+
+        listEl.innerHTML = '';
+        currentSongs.forEach(song => listEl.appendChild(createSongItem(song)));
     } catch (e) {
         console.error(e);
-        if (e.code === 'failed-precondition') {
-            console.log("Firestore 색인이 필요합니다. 콘솔의 링크를 확인하세요.");
-        }
-        if (!isMore) listEl.innerHTML = '<div class="empty-msg">불러오기 실패.<br>(관리자가 콘솔을 확인해주세요)</div>';
+        listEl.innerHTML = '<div class="empty-msg">불러오기 실패.<br>(관리자가 콘솔을 확인해주세요)</div>';
     }
 }
 
-export function loadMoreSongs() { loadSongs(true); }
+// 'YYYY-MM-DD' -> '7/6(월)'
+function formatDateBadge(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAY_LABELS[d.getDay()]})`;
+}
 
 // DOM API로 목록 항목 생성 (innerHTML XSS 방지)
 function createSongItem(song) {
     const item = document.createElement('div');
     item.className = 'song-item';
+
+    if (song.date) {
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'song-item-date';
+        dateSpan.textContent = formatDateBadge(song.date);
+        item.appendChild(dateSpan);
+    }
 
     const titleSpan = document.createElement('span');
     titleSpan.className = 'song-item-title';
@@ -159,6 +162,7 @@ export function openSongEditModal(songId) {
     document.getElementById('song-modal-title').textContent = song ? '찬양곡 수정' : '새 찬양곡 추가';
     document.getElementById('song-title').value = song ? song.title : '';
     document.getElementById('song-book').value = song ? (song.bookTitle || '') : '';
+    document.getElementById('song-date').value = song ? (song.date || '') : '';
     document.getElementById('song-url-all').value = (song && song.urls) ? (song.urls.all || '') : '';
 
     PART_KEYS.forEach(p => {
@@ -190,6 +194,7 @@ export async function saveSongLink() {
 
     const title = document.getElementById('song-title').value.trim();
     const bookTitle = document.getElementById('song-book').value.trim();
+    const date = document.getElementById('song-date').value || null;
     const urlAll = normalizeUrl(document.getElementById('song-url-all').value.trim());
 
     if (!title) { alert("제목을 입력해야 합니다."); return; }
@@ -206,11 +211,11 @@ export async function saveSongLink() {
 
     try {
         if (songId) {
-            await updateDoc(doc(songsCollection, songId), { title, bookTitle, urls });
+            await updateDoc(doc(songsCollection, songId), { title, bookTitle, date, urls });
         } else {
             await addDoc(songsCollection, {
                 groupId: state.currentGroupId,
-                title, bookTitle, urls,
+                title, bookTitle, date, urls,
                 createdAt: new Date().toISOString()
             });
         }

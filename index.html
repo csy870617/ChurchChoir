@@ -119,7 +119,6 @@
                     <button type="button" class="btn-write" onclick="openSongEditModal()">＋ 곡 추가</button>
                 </div>
                 <div id="song-list" class="song-list"></div>
-                <button id="btn-load-more-songs" class="btn-load-more" style="display: none;" onclick="loadMoreSongs()">더 보기</button>
             </div>
         </section>
 
@@ -185,6 +184,8 @@
                 <input type="text" id="song-book" class="input-full-url" placeholder="책 제목">
             </div>
             <div id="song-title-search-msg" class="search-msg" style="display: none;"></div>
+
+            <input type="date" id="song-date" class="input-full-url" aria-label="부를 날짜">
 
             <div class="link-method-block">
                 <input type="text" id="song-url-all" class="input-full-url" list="youtube-url-history" placeholder="유튜브 링크 직접 붙여넣기">

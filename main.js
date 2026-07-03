@@ -14,8 +14,7 @@ import {
     saveSongLink,
     deleteSongLink,
     searchJoongangArt,
-    searchMySongs,
-    loadMoreSongs
+    searchMySongs
 } from "./songs.js";
 
 // 카카오톡/네이버/인스타그램 등 인앱 브라우저에서는 새 탭 열기 등이 제한될 수 있어 외부 브라우저로 유도
@@ -61,7 +60,6 @@ window.saveSongLink = saveSongLink;
 window.deleteSongLink = deleteSongLink;
 window.searchJoongangArt = searchJoongangArt;
 window.searchMySongs = searchMySongs;
-window.loadMoreSongs = loadMoreSongs;
 
 // 키보드 이벤트 (모달 닫기)
 document.addEventListener('keydown', (e) => {
