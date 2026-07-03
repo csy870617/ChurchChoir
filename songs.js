@@ -187,6 +187,7 @@ export async function saveSongLink() {
     const urlAll = normalizeUrl(document.getElementById('song-url-all').value.trim());
 
     if (!title) { alert("제목을 입력해야 합니다."); return; }
+    if (!date) { alert("부를 날짜를 선택해야 합니다."); return; }
     if (!isValidChoirLink(urlAll)) { alert("합창 링크는 유튜브 주소 또는 중앙아트 링크만 가능합니다."); return; }
 
     const urls = { all: urlAll };
