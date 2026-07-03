@@ -126,6 +126,26 @@ export function getUrlHistory() {
     } catch (e) { return []; }
 }
 
+// 이전에 입력했던 곡 제목을 기억해두었다가 다음 입력 시 datalist로 불러올 수 있게 함
+const TITLE_HISTORY_KEY = 'choir_title_history';
+const TITLE_HISTORY_MAX = 30;
+
+export function addTitleToHistory(title) {
+    if (!title) return;
+    try {
+        const list = getTitleHistory().filter(t => t !== title);
+        list.unshift(title);
+        localStorage.setItem(TITLE_HISTORY_KEY, JSON.stringify(list.slice(0, TITLE_HISTORY_MAX)));
+    } catch (e) {}
+}
+
+export function getTitleHistory() {
+    try {
+        const raw = localStorage.getItem(TITLE_HISTORY_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+}
+
 // 모달용 히스토리 항목은 항상 1개만 유지 (중첩 모달 + 연속 닫기 시 뒤로가기 중복 방지)
 let modalStatePushed = false;
 
