@@ -463,6 +463,7 @@ textarea.input-full { height: 130px; resize: vertical; line-height: 1.6; }
 /* 곡 등록/수정 모달 */
 .modal-desc { font-size: 0.85em; line-height: 1.6; color: var(--text-secondary); margin: -8px 0 18px; }
 .title-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.title-row > * { flex: 1; min-width: 0; }
 .input-full-url {
     width: 100%;
     box-sizing: border-box;
@@ -479,6 +480,23 @@ textarea.input-full { height: 130px; resize: vertical; line-height: 1.6; }
 .input-full-url:focus { outline: none; border-color: rgba(10, 132, 255, 0.55); background: var(--surface); }
 .title-row .input-full-url { margin-bottom: 0; }
 .input-part { font-size: 0.9em; }
+
+.title-search-group { display: flex; gap: 6px; min-width: 0; }
+.title-search-group .input-full-url { flex: 1; min-width: 0; }
+.btn-inline-search {
+    flex-shrink: 0;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.btn-inline-search:hover { background: var(--surface); border-color: var(--border-strong); color: var(--text-primary); }
 
 .link-method-block { margin-bottom: 8px; }
 .link-method-divider { display: flex; align-items: center; text-align: center; color: var(--text-tertiary); font-size: 0.78em; margin: 6px 0 14px; }
