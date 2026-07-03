@@ -177,12 +177,15 @@ export function attachAutocomplete(inputEl, getItems) {
             const item = document.createElement('div');
             item.className = 'autocomplete-item';
             item.textContent = value;
-            // blur보다 먼저 실행되도록 mousedown 단계에서 선택을 처리
-            item.addEventListener('mousedown', (e) => {
+            // blur보다 먼저 실행되도록 mousedown 단계에서 선택을 처리하고,
+            // mousedown 호환 이벤트가 누락되는 일부 모바일 브라우저를 위해 click도 함께 처리
+            const select = (e) => {
                 e.preventDefault();
                 inputEl.value = value;
                 dropdown.style.display = 'none';
-            });
+            };
+            item.addEventListener('mousedown', select);
+            item.addEventListener('click', select);
             dropdown.appendChild(item);
         });
         dropdown.style.display = 'block';
