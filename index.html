@@ -176,13 +176,14 @@
                 <p class="link-method-label">찬양곡 직접 추가하기</p>
 
                 <div class="title-search-group">
-                    <input type="text" id="song-title" class="input-full-url" list="song-title-history" placeholder="곡 제목(필수)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); searchMySongs(); }">
+                    <input type="text" id="song-title" class="input-full-url" placeholder="곡 제목 입력(필수)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); searchMySongs(); }">
                     <button type="button" class="btn-inline-search" onclick="searchMySongs()" aria-label="예전에 등록한 곡 검색">
                         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
                             <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm9 2-5.2-5.2"/>
                         </svg>
                     </button>
                 </div>
+                <p class="section-hint">이전에 입력했던 곡은 'Q'버튼을 통해 불러올 수 있습니다.</p>
 
                 <div class="title-row">
                     <input type="text" id="song-book" class="input-full-url" placeholder="책 제목">
@@ -198,19 +199,16 @@
             <div id="song-title-search-msg" class="search-msg" style="display: none;"></div>
 
             <div class="link-method-block">
-                <input type="text" id="song-url-all" class="input-full-url" list="youtube-url-history" placeholder="유튜브 링크(합창) 직접 붙여넣기">
+                <input type="text" id="song-url-all" class="input-full-url" placeholder="유튜브 링크(합창) 직접 붙여넣기">
             </div>
 
             <button type="button" id="btn-toggle-parts" class="btn-toggle-section" onclick="toggleCollapsible('song-part-inputs', this)">▸ 파트별 링크 추가하기 (선택)</button>
             <div id="song-part-inputs" style="display: none;">
-                <input type="text" id="song-url-sop" class="input-full-url input-part" list="youtube-url-history" placeholder="소프라노 링크">
-                <input type="text" id="song-url-alt" class="input-full-url input-part" list="youtube-url-history" placeholder="알토 링크">
-                <input type="text" id="song-url-ten" class="input-full-url input-part" list="youtube-url-history" placeholder="테너 링크">
-                <input type="text" id="song-url-bas" class="input-full-url input-part" list="youtube-url-history" placeholder="베이스 링크">
+                <input type="text" id="song-url-sop" class="input-full-url input-part" placeholder="소프라노 링크">
+                <input type="text" id="song-url-alt" class="input-full-url input-part" placeholder="알토 링크">
+                <input type="text" id="song-url-ten" class="input-full-url input-part" placeholder="테너 링크">
+                <input type="text" id="song-url-bas" class="input-full-url input-part" placeholder="베이스 링크">
             </div>
-
-            <datalist id="youtube-url-history"></datalist>
-            <datalist id="song-title-history"></datalist>
 
             <div class="modal-footer-row">
                 <div class="left-group">

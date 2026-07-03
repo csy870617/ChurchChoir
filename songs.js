@@ -1,7 +1,7 @@
 import { getDocs, addDoc, deleteDoc, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { songsCollection } from "./config.js";
 import { state } from "./state.js";
-import { isValidChoirLink, isValidJoongangArtUrl, normalizeUrl, openModalWithHistory, closeModalWithHistory, bindPressActions, setCollapsibleState, addUrlToHistory, getUrlHistory, addTitleToHistory, getTitleHistory } from "./utils.js";
+import { isValidChoirLink, isValidJoongangArtUrl, normalizeUrl, openModalWithHistory, closeModalWithHistory, bindPressActions, setCollapsibleState, addUrlToHistory, getUrlHistory, addTitleToHistory, getTitleHistory, attachAutocomplete } from "./utils.js";
 import { performSearch } from "./search.js";
 
 const PART_KEYS = ['sop', 'alt', 'ten', 'bas'];
@@ -9,6 +9,10 @@ const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 // 현재 화면에 불러온 곡 목록 (재생/수정 모달을 열 때 재조회 없이 참조)
 let currentSongs = [];
+
+attachAutocomplete(document.getElementById('song-title'), getTitleHistory);
+attachAutocomplete(document.getElementById('song-url-all'), getUrlHistory);
+PART_KEYS.forEach(p => attachAutocomplete(document.getElementById(`song-url-${p}`), getUrlHistory));
 
 export function closeSongModal() { closeModalWithHistory(); }
 export function closePlayModal() { closeModalWithHistory(); }
@@ -139,25 +143,10 @@ export function openDirectLink(part) {
     }
 }
 
-// 이전에 입력했던 값을 datalist에 채워 넣어, 입력 필드에서 바로 불러올 수 있게 함
-function renderHistoryDatalist(datalistId, values) {
-    const datalist = document.getElementById(datalistId);
-    if (!datalist) return;
-    datalist.innerHTML = '';
-    values.forEach(value => {
-        const option = document.createElement('option');
-        option.value = value;
-        datalist.appendChild(option);
-    });
-}
-
 // --- 찬양곡 등록/수정 모달 ---
 export function openSongEditModal(songId) {
     state.currentSongId = songId || null;
     const song = songId ? currentSongs.find(s => s.id === songId) : null;
-
-    renderHistoryDatalist('youtube-url-history', getUrlHistory());
-    renderHistoryDatalist('song-title-history', getTitleHistory());
 
     document.getElementById('song-modal-title').textContent = song ? '찬양곡 수정' : '찬양곡 추가';
     document.getElementById('song-title').value = song ? song.title : '';
