@@ -387,10 +387,14 @@ footer a:hover { color: var(--text-secondary); text-decoration: underline; }
 
 .empty-msg { text-align: center; font-size: 0.88em; color: var(--text-tertiary); padding: 32px 10px; font-weight: 500; }
 
-/* 공지사항 카드 */
-.post-card { padding: 18px 0; border-bottom: 1px solid var(--border); }
-.post-card:first-child { padding-top: 8px; }
-.post-card:last-child { border-bottom: none; }
+/* 공지사항 카드 (찬양곡 항목처럼 새 글마다 별도 박스로 표시) */
+#post-items { display: flex; flex-direction: column; gap: 10px; }
+.post-card {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+}
 .post-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
 .post-title { font-size: 1em; font-weight: 700; color: var(--text-primary); }
 .post-meta { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 0.78em; color: var(--text-tertiary); }
