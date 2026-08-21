@@ -104,7 +104,7 @@ body::before {
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: clamp(420px, 60vw, 760px);
+    max-width: clamp(420px, 78vw, 900px);
     margin: 0 auto;
     padding: 88px clamp(14px, 2.5vw, 36px) 48px;
 }
