@@ -9,6 +9,8 @@ const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 // 현재 화면에 불러온 곡 목록 (재생/수정 모달을 열 때 재조회 없이 참조)
 let currentSongs = [];
+// 목록 요청 번호. 불러오기가 겹치면(연속 입장·저장 등) 마지막 요청 결과만 화면에 반영한다.
+let songsRequestId = 0;
 
 attachAutocomplete(document.getElementById('song-title'), getTitleHistory);
 attachAutocomplete(document.getElementById('song-url-all'), getUrlHistory);
@@ -17,25 +19,31 @@ PART_KEYS.forEach(p => attachAutocomplete(document.getElementById(`song-url-${p}
 export function closeSongModal() { closeModalWithHistory(); }
 export function closePlayModal() { closeModalWithHistory(); }
 
+// 'YYYY-MM-DD'를 로컬 자정 기준 시각(ms)으로 변환. 형식이 잘못됐으면 NaN
+function parseSongDate(dateStr) {
+    return new Date(dateStr + 'T00:00:00').getTime();
+}
+
 // 부를 날짜가 있는 곡은 오늘과 가까운 순서로, 날짜가 없는 곡은 최근 등록순으로 맨 아래에 배치
 function sortSongsByClosestDate(songs) {
     const todayMs = new Date().setHours(0, 0, 0, 0);
 
     songs.sort((a, b) => {
-        const aHasDate = !!a.date;
-        const bHasDate = !!b.date;
+        // 형식이 잘못된 날짜는 날짜 없음으로 취급 (NaN 비교로 정렬이 흔들리는 것 방지)
+        const aHasDate = !!a.date && !isNaN(parseSongDate(a.date));
+        const bHasDate = !!b.date && !isNaN(parseSongDate(b.date));
 
         if (aHasDate && bHasDate) {
-            const diffA = Math.abs(new Date(a.date + 'T00:00:00').getTime() - todayMs);
-            const diffB = Math.abs(new Date(b.date + 'T00:00:00').getTime() - todayMs);
+            const diffA = Math.abs(parseSongDate(a.date) - todayMs);
+            const diffB = Math.abs(parseSongDate(b.date) - todayMs);
             if (diffA !== diffB) return diffA - diffB;
         } else if (aHasDate !== bHasDate) {
             return aHasDate ? -1 : 1;
         }
 
         // createdAt이 없는 옛 데이터는 0(가장 오래됨)으로 간주해 NaN 비교로 인한 순서 불안정을 방지
-        const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        const aCreated = new Date(a.createdAt).getTime() || 0;
+        const bCreated = new Date(b.createdAt).getTime() || 0;
         return bCreated - aCreated;
     });
 }
@@ -45,27 +53,31 @@ export async function loadSongs() {
     const listEl = document.getElementById('song-list');
     if (!state.currentGroupId) return;
 
+    const requestId = ++songsRequestId;
     listEl.innerHTML = '<div class="empty-msg">불러오는 중...</div>';
-    currentSongs = [];
 
     try {
         const q = query(songsCollection, where("groupId", "==", state.currentGroupId));
         const snap = await getDocs(q);
+        if (requestId !== songsRequestId) return; // 더 최근 요청이 있으면 이 결과는 버림
 
-        if (snap.empty) {
+        const songs = [];
+        snap.forEach((docSnap) => {
+            songs.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        sortSongsByClosestDate(songs);
+        currentSongs = songs;
+
+        if (songs.length === 0) {
             listEl.innerHTML = '<div class="empty-msg">등록된 찬양곡이 없습니다.<br>위 [＋ 곡 추가]로 등록해보세요.</div>';
             return;
         }
 
-        snap.forEach((docSnap) => {
-            currentSongs.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        sortSongsByClosestDate(currentSongs);
-
         listEl.innerHTML = '';
-        currentSongs.forEach(song => listEl.appendChild(createSongItem(song)));
+        songs.forEach(song => listEl.appendChild(createSongItem(song)));
     } catch (e) {
         console.error(e);
+        if (requestId !== songsRequestId) return;
         listEl.innerHTML = '<div class="empty-msg">불러오기 실패.<br>(관리자가 콘솔을 확인해주세요)</div>';
     }
 }
@@ -81,7 +93,7 @@ function createSongItem(song) {
     const item = document.createElement('div');
     item.className = 'song-item';
 
-    if (song.date) {
+    if (song.date && !isNaN(parseSongDate(song.date))) {
         const dateSpan = document.createElement('span');
         dateSpan.className = 'song-item-date';
         dateSpan.textContent = formatDateBadge(song.date);
@@ -107,7 +119,7 @@ function createSongItem(song) {
             const urlAll = song.urls ? song.urls.all : null;
             const hasPartLinks = !!(song.urls && PART_KEYS.some(p => song.urls[p]));
             if (isValidJoongangArtUrl(urlAll) && !hasPartLinks) {
-                window.open(urlAll, '_blank');
+                window.open(urlAll, '_blank', 'noopener');
             } else {
                 openSongPlayModal(song.id);
             }
@@ -142,7 +154,7 @@ export function openDirectLink(part) {
     const url = song && song.urls ? song.urls[part] : null;
 
     if (url) {
-        window.open(url, '_blank');
+        window.open(url, '_blank', 'noopener');
     } else {
         alert('등록된 링크가 없습니다.');
     }

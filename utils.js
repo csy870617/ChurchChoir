@@ -121,8 +121,9 @@ export function addUrlToHistory(url) {
 
 export function getUrlHistory() {
     try {
-        const raw = localStorage.getItem(URL_HISTORY_KEY);
-        return raw ? JSON.parse(raw) : [];
+        const list = JSON.parse(localStorage.getItem(URL_HISTORY_KEY) || '[]');
+        // 저장값이 손상돼 배열이 아니면 자동완성이 오류로 멈추지 않도록 빈 목록으로 처리
+        return Array.isArray(list) ? list.filter(v => typeof v === 'string') : [];
     } catch (e) { return []; }
 }
 
@@ -141,8 +142,9 @@ export function addTitleToHistory(title) {
 
 export function getTitleHistory() {
     try {
-        const raw = localStorage.getItem(TITLE_HISTORY_KEY);
-        return raw ? JSON.parse(raw) : [];
+        const list = JSON.parse(localStorage.getItem(TITLE_HISTORY_KEY) || '[]');
+        // 저장값이 손상돼 배열이 아니면 자동완성이 오류로 멈추지 않도록 빈 목록으로 처리
+        return Array.isArray(list) ? list.filter(v => typeof v === 'string') : [];
     } catch (e) { return []; }
 }
 

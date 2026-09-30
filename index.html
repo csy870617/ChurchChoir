@@ -21,10 +21,20 @@
     <meta property="og:image" content="https://csy870617.github.io/ChurchChoir/ad/thumbnail2.png">
 
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@latest/dist/web/variable/pretendardvariable.css">
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
 
     <script src="concise_data.js?v=4"></script>
-    <script type="module" src="main.js?v=6"></script>
+    <script type="module" src="main.js?v=7"></script>
+    <script type="module">
+        // 상단 곡 검색·테마 전환은 Firebase가 필요 없으므로 따로 연결해,
+        // Firebase 스크립트를 불러오지 못하는 환경(네트워크 차단 등)에서도 동작하게 한다.
+        import { searchAndRedirect } from "./search.js";
+        import { toggleTheme } from "./theme.js";
+        import { closeModalWithHistory } from "./utils.js";
+        window.searchAndRedirect = searchAndRedirect;
+        window.toggleTheme = toggleTheme;
+        document.addEventListener('keydown', (e) => { if (e.key === "Escape") closeModalWithHistory(); });
+    </script>
 </head>
 <body>
     <button type="button" id="btn-theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="라이트/다크 모드 전환">
@@ -132,7 +142,7 @@
         </section>
 
         <footer>
-            <a href="https://www.joongangart.kr/partpractice/partpractice.html" target="_blank">
+            <a href="https://www.joongangart.kr/partpractice/partpractice.html" target="_blank" rel="noopener noreferrer">
                 데이터 출처 및 저작권: 중앙아트(Joongang Art Co.)
             </a>
         </footer>

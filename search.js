@@ -3,6 +3,8 @@ import { openModalWithHistory, closeModalWithHistory } from "./utils.js";
 export function performSearch(userInput) {
     const normalizedInput = userInput.replace(/[\s\(\)\[\]!.]/g, '').toLowerCase();
     const matches = [];
+    // 공백·문장부호만 입력하면 정규화 후 빈 문자열이 되어 모든 곡이 일치하므로 검색하지 않음
+    if (!normalizedInput) return matches;
     if (typeof window.CONCISE_BOOK_DATA === 'undefined') { console.error('concise_data.js 로드 실패'); return []; }
     for (const book of window.CONCISE_BOOK_DATA) {
         const prefix = book[0];
@@ -43,7 +45,7 @@ export function searchAndRedirect(form) {
     if (!userInput) return false;
     const matches = performSearch(userInput);
     if (matches.length === 0) { alert("검색 결과가 없습니다."); }
-    else if (matches.length === 1) { window.open(matches[0].url, '_blank'); }
+    else if (matches.length === 1) { window.open(matches[0].url, '_blank', 'noopener'); }
     else { showSelectionPopup(matches); }
     return false;
 }
@@ -66,7 +68,7 @@ export function showSelectionPopup(matches) {
         item.appendChild(strong);
         item.appendChild(span);
         item.onclick = () => {
-            window.open(match.url, '_blank');
+            window.open(match.url, '_blank', 'noopener');
             closeModalWithHistory();
         };
         optionsList.appendChild(item);
