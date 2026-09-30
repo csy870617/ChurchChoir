@@ -1,8 +1,6 @@
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { auth } from "./config.js";
-import { closeModalWithHistory, escapeInAppBrowser, toggleCollapsible } from "./utils.js";
-import { searchAndRedirect } from "./search.js";
-import { toggleTheme } from "./theme.js";
+import { escapeInAppBrowser, toggleCollapsible } from "./utils.js";
 import { openRoomModal, closeRoomModal, createRoom, loginRoom, logoutRoom, inviteMembers, tryAutoLoginFromUrl, tryAutoLoginFromStorage } from "./auth.js";
 import { showWriteForm, showBoardList, savePost, deletePostFromForm, tryEditPost, goToPrevPostPage, goToNextPostPage, toggleBoardCollapse } from "./board.js";
 import {
@@ -33,9 +31,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // --- 전역 함수 등록 ---
-window.searchAndRedirect = searchAndRedirect;
+// 상단 곡 검색(searchAndRedirect)·테마 전환(toggleTheme)·Esc 닫기는 index.html에서 Firebase와 별도로 연결
 window.toggleCollapsible = toggleCollapsible;
-window.toggleTheme = toggleTheme;
 
 window.openRoomModal = openRoomModal;
 window.closeRoomModal = closeRoomModal;
@@ -62,10 +59,3 @@ window.saveSongLink = saveSongLink;
 window.deleteSongLink = deleteSongLink;
 window.searchJoongangArt = searchJoongangArt;
 window.searchMySongs = searchMySongs;
-
-// 키보드 이벤트 (모달 닫기)
-document.addEventListener('keydown', (e) => {
-    if (e.key === "Escape") {
-        closeModalWithHistory();
-    }
-});

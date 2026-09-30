@@ -12,6 +12,8 @@ const MAX_CONTENT_LENGTH = 2000;
 // 현재 연습실의 공지사항 전체 (최신순 정렬). 페이지 넘김은 이 배열을 잘라서 화면에 보여준다.
 let currentPosts = [];
 let currentPage = 1;
+// 목록 요청 번호. 불러오기가 겹치면(연속 입장·저장 등) 마지막 요청 결과만 화면에 반영한다.
+let postsRequestId = 0;
 
 // --- 공지사항 박스 접기/펼치기 (선택한 상태는 다음 방문에도 유지) ---
 const BOARD_COLLAPSED_KEY = 'choir_board_collapsed';
@@ -41,24 +43,27 @@ export async function loadPosts(keepPage = false) {
     const pagination = document.getElementById('board-pagination');
     if (!state.currentGroupId) return;
 
+    const requestId = ++postsRequestId;
     listEl.innerHTML = '<div class="empty-msg">불러오는 중...</div>';
     pagination.style.display = 'none';
-    currentPosts = [];
 
     try {
         const q = query(boardCollection, where("groupId", "==", state.currentGroupId));
         const snap = await getDocs(q);
+        if (requestId !== postsRequestId) return; // 더 최근 요청이 있으면 이 결과는 버림
 
-        if (snap.empty) {
+        const posts = [];
+        snap.forEach((docSnap) => {
+            posts.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        // 최신 작성일이 위로 오도록 정렬 (작성일이 없거나 잘못된 글은 맨 아래)
+        posts.sort((a, b) => (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0));
+        currentPosts = posts;
+
+        if (posts.length === 0) {
             listEl.innerHTML = '<div class="empty-msg">등록된 공지사항이 없습니다.</div>';
             return;
         }
-
-        snap.forEach((docSnap) => {
-            currentPosts.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        // 최신 작성일이 위로 오도록 정렬
-        currentPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         const totalPages = Math.max(1, Math.ceil(currentPosts.length / POSTS_PER_PAGE));
         if (!keepPage) currentPage = 1;
@@ -67,6 +72,7 @@ export async function loadPosts(keepPage = false) {
         renderPostPage();
     } catch (e) {
         console.error(e);
+        if (requestId !== postsRequestId) return;
         listEl.innerHTML = '<div class="empty-msg">데이터 로딩 실패.<br>(관리자가 콘솔을 확인해주세요)</div>';
     }
 }
@@ -128,7 +134,8 @@ function createPostCard(post) {
     authorSpan.textContent = post.author; // textContent로 XSS 차단
     const dateSpan = document.createElement('span');
     dateSpan.className = 'post-date';
-    dateSpan.textContent = new Date(post.date).toLocaleDateString();
+    const postDate = new Date(post.date);
+    dateSpan.textContent = isNaN(postDate.getTime()) ? '' : postDate.toLocaleDateString();
     meta.appendChild(authorSpan);
     meta.appendChild(dateSpan);
 
@@ -161,6 +168,13 @@ export function showWriteForm() {
     document.getElementById('board-list').style.display = 'none';
     document.getElementById('btn-show-write').style.display = 'none';
     document.getElementById('board-write').style.display = 'block';
+}
+
+// 글쓰기/수정 화면을 닫고 목록 화면 상태로 되돌린다 (목록은 다시 불러오지 않음)
+export function resetBoardView() {
+    document.getElementById('board-write').style.display = 'none';
+    document.getElementById('board-list').style.display = 'block';
+    document.getElementById('btn-show-write').style.display = 'inline-flex';
 }
 
 export function showBoardList() {

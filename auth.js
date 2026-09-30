@@ -2,7 +2,7 @@ import { getDocs, addDoc, doc, getDoc, query, where } from "https://www.gstatic.
 import { groupsCollection } from "./config.js";
 import { state } from "./state.js";
 import { hashPassword, openModalWithHistory, closeModalWithHistory, copyToClipboard } from "./utils.js";
-import { loadPosts } from "./board.js";
+import { loadPosts, resetBoardView } from "./board.js";
 import { loadSongs } from "./songs.js";
 
 const SHARE_BASE_URL = 'https://csy870617.github.io/ChurchChoir/';
@@ -125,10 +125,16 @@ export async function createRoom() {
     }
 }
 
+// 입장 처리 중 버튼을 다시 눌러도 입장·목록 불러오기가 겹치지 않도록 재진입 차단
+let isLoggingIn = false;
+
 export async function loginRoom() {
+    if (isLoggingIn) return;
+
     const { church, choir, pw } = readRoomInputs();
     if (!church || !choir || !pw) { alert("교회 이름, 성가대 이름, 비밀번호를 모두 입력해주세요."); return; }
 
+    isLoggingIn = true;
     try {
         const hashedPw = await hashPassword(pw);
         const snap = await getDocs(buildRoomQuery(hashedPw, church, choir));
@@ -143,6 +149,8 @@ export async function loginRoom() {
     } catch (e) {
         console.error(e);
         alert("입장 중 오류가 발생했습니다.");
+    } finally {
+        isLoggingIn = false;
     }
 }
 
@@ -215,7 +223,8 @@ export function logoutRoom() {
     state.currentSongId = null;
 
     clearCredentials();
+    resetBoardView(); // 글쓰기 화면이 열린 채로 나가도 다음 입장 때는 목록 화면으로 시작
 
     document.getElementById('room-section').style.display = 'none';
-    document.getElementById('btn-open-room').style.display = 'inline-flex';
+    document.getElementById('btn-open-room').style.display = ''; // CSS 기본값(flex, 가로 꽉 채움)으로 복원
 }
